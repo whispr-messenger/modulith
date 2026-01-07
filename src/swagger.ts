@@ -5,8 +5,8 @@ import { DocumentBuilder, SwaggerCustomOptions, SwaggerModule } from '@nestjs/sw
 
 function buildSwaggerDocument(port: number) {
 	return new DocumentBuilder()
-		.setTitle('Authentication Service')
-		.setDescription('API documentation for the Authentication Service')
+		.setTitle('Whispr Messenger')
+		.setDescription('API documentation for Whispr Messenger')
 		.setVersion('1.0')
 		.addServer(`http://localhost:${port}`, 'Development')
 		.addServer('https://whispr.epitech-msc2026.me', 'Production')
