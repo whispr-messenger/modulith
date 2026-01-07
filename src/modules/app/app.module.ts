@@ -1,13 +1,16 @@
 import { CacheModule, CacheModuleAsyncOptions } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigModuleOptions, ConfigService } from '@nestjs/config';
-import { cacheModuleOptionsFactory } from './config';
+import { cacheModuleOptionsFactory, typeOrmModuleOptionsFactory } from './config';
+import { TypeOrmModule, TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
+import { HealthModule } from '../heatlh/health.module';
 
 // Environment variables
 const configModuleOptions: ConfigModuleOptions = {
   isGlobal: true,
   envFilePath: '.env',
 };
+
 
 // Caching (Redis)
 const cacheModuleAsyncOptions: CacheModuleAsyncOptions = {
@@ -17,11 +20,20 @@ const cacheModuleAsyncOptions: CacheModuleAsyncOptions = {
   isGlobal: true,
 };
 
+// Database (Postgres)
+const typeOrmModuleAsyncOptions: TypeOrmModuleAsyncOptions = {
+	imports: [ConfigModule],
+	useFactory: typeOrmModuleOptionsFactory,
+	inject: [ConfigService],
+};
+
 
 @Module({
   imports: [
     ConfigModule.forRoot(configModuleOptions),
     CacheModule.registerAsync(cacheModuleAsyncOptions),
+    TypeOrmModule.forRootAsync(typeOrmModuleAsyncOptions),
+    HealthModule,
   ],
 })
 export class AppModule { }
