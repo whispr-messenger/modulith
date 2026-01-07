@@ -8,7 +8,7 @@ function buildSwaggerDocument(port: number) {
 		.setTitle('Whispr Messenger')
 		.setDescription('API documentation for Whispr Messenger')
 		.setVersion('1.0')
-		.addServer(`http://localhost:${port}`, 'Development')
+		.addServer(`http://127.0.0.1:${port}`, 'Development')
 		.addServer('https://whispr.epitech-msc2026.me', 'Production')
 		.build();
 }
