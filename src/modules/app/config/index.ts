@@ -1,0 +1,1 @@
+export { cacheModuleOptionsFactory } from './cache.config';
