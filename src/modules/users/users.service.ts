@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User, PrivacySettings, UserSearchIndex } from '../entities';
-import { CreateUserDto, UpdateUserDto } from '../dto';
+import { User, PrivacySettings, UserSearchIndex } from '../../entities';
+import { CreateUserDto, UpdateUserDto } from '../../dto';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -18,7 +18,7 @@ export class UsersService {
     private readonly privacySettingsRepository: Repository<PrivacySettings>,
     @InjectRepository(UserSearchIndex)
     private readonly userSearchIndexRepository: Repository<UserSearchIndex>,
-  ) {}
+  ) { }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     // Vérifier si le numéro de téléphone existe déjà
@@ -59,7 +59,7 @@ export class UsersService {
         phoneNumberHash: this.hashPhoneNumber(createUserDto.phoneNumber),
         usernameNormalized: createUserDto.username.toLowerCase(),
         firstNameNormalized: createUserDto.firstName.toLowerCase(),
-        lastNameNormalized: createUserDto.lastName?.toLowerCase() || null,
+        lastNameNormalized: createUserDto.lastName?.toLowerCase() || '',
       });
       await queryRunner.manager.save(searchIndex);
 
@@ -149,7 +149,7 @@ export class UsersService {
           }
           if (updateUserDto.lastName !== undefined) {
             searchIndex.lastNameNormalized =
-              updateUserDto.lastName?.toLowerCase() || null;
+              updateUserDto.lastName?.toLowerCase() || '';
           }
           await queryRunner.manager.save(searchIndex);
         }

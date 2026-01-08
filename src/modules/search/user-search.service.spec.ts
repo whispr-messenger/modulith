@@ -8,7 +8,7 @@ import {
   UserSearchResult,
   SearchOptions,
 } from './user-search.service';
-import { User, PrivacySettings, PrivacyLevel } from '../entities';
+import { User, PrivacySettings, PrivacyLevel } from '../../entities';
 import { SearchIndexService } from '../cache';
 import { PrivacyService } from '../privacy/privacy.service';
 

@@ -8,8 +8,8 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { GroupsService } from './groups.service';
-import { Group, GroupMember, User, GroupRole } from '../entities';
-import { CreateGroupDto, UpdateGroupDto, AddGroupMemberDto } from '../dto';
+import { Group, GroupMember, User, GroupRole } from '../../entities';
+import { CreateGroupDto, UpdateGroupDto, AddGroupMemberDto } from '../../dto';
 
 describe('GroupsService', () => {
   let service: GroupsService;

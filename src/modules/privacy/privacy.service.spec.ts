@@ -4,8 +4,8 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { PrivacyService } from './privacy.service';
-import { PrivacySettings, User, PrivacyLevel } from '../entities';
-import { UpdatePrivacySettingsDto } from '../dto';
+import { PrivacySettings, User, PrivacyLevel } from '../../entities';
+import { UpdatePrivacySettingsDto } from '../../dto';
 
 describe('PrivacyService', () => {
   let service: PrivacyService;

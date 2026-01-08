@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CacheService } from './cache.service';
-import { User } from '../entities';
+import { User } from '../../entities';
 
 export interface SearchIndexEntry {
   userId: string;
@@ -22,7 +22,7 @@ export class SearchIndexService {
   private readonly USER_CACHE_PREFIX = 'user:cache';
   private readonly CACHE_TTL = 3600; // 1 hour
 
-  constructor(private cacheService: CacheService) {}
+  constructor(private cacheService: CacheService) { }
 
   /**
    * Add or update user in search indexes
@@ -327,14 +327,16 @@ export class SearchIndexService {
     totalCachedUsers: number;
   }> {
     try {
-      const [phoneCount, usernameCount, nameIndexKeys, cachedUserKeys] =
+      const [phoneCountRaw, usernameCountRaw, nameIndexKeys, cachedUserKeys] =
         await Promise.all([
-          this.cacheService.get<number>(`${this.PHONE_INDEX_KEY}:count`) || 0,
-          this.cacheService.get<number>(`${this.USERNAME_INDEX_KEY}:count`) ||
-            0,
+          this.cacheService.get<number>(`${this.PHONE_INDEX_KEY}:count`),
+          this.cacheService.get<number>(`${this.USERNAME_INDEX_KEY}:count`),
           this.cacheService.keys(`${this.NAME_INDEX_KEY}:*`),
           this.cacheService.keys(`${this.USER_CACHE_PREFIX}:*`),
         ]);
+
+      const phoneCount = phoneCountRaw || 0;
+      const usernameCount = usernameCountRaw || 0;
 
       return {
         totalPhoneIndexes: phoneCount,

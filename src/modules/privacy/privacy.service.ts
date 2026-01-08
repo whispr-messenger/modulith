@@ -2,8 +2,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PrivacySettings, PrivacyLevel, User } from '../entities';
-import { UpdatePrivacySettingsDto } from '../dto';
+import { PrivacySettings, PrivacyLevel, User } from '../../entities';
+import { UpdatePrivacySettingsDto } from '../../dto';
 
 @Injectable()
 export class PrivacyService {
@@ -12,7 +12,7 @@ export class PrivacyService {
     private readonly privacySettingsRepository: Repository<PrivacySettings>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+  ) { }
 
   async getPrivacySettings(userId: string): Promise<PrivacySettings> {
     const privacySettings = await this.privacySettingsRepository.findOne({

@@ -9,8 +9,8 @@ import {
   PrivacySettings,
   PrivacyLevel,
   UserSearchIndex,
-} from '../entities';
-import { CreateUserDto, UpdateUserDto } from '../dto';
+} from '../../entities';
+import { CreateUserDto, UpdateUserDto } from '../../dto';
 import { CacheService } from '../cache';
 
 describe('UsersService', () => {

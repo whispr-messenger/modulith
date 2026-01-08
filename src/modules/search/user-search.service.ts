@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike, In } from 'typeorm';
-import { User, PrivacySettings } from '../entities';
+import { User, PrivacySettings } from '../../entities';
 import { SearchIndexService } from '../cache';
 import { PrivacyService } from '../privacy/privacy.service';
 
@@ -37,7 +37,7 @@ export class UserSearchService {
     private privacyRepository: Repository<PrivacySettings>,
     private searchIndexService: SearchIndexService,
     private privacyService: PrivacyService,
-  ) {}
+  ) { }
 
   /**
    * Search user by phone number
@@ -188,8 +188,8 @@ export class UserSearchService {
           .leftJoinAndSelect('user.privacySettings', 'privacySettings')
           .where(
             '(LOWER(user.firstName) LIKE LOWER(:query) OR ' +
-              'LOWER(user.lastName) LIKE LOWER(:query) OR ' +
-              "LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE LOWER(:query))",
+            'LOWER(user.lastName) LIKE LOWER(:query) OR ' +
+            "LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE LOWER(:query))",
             { query: `%${query}%` },
           )
           .andWhere('user.id NOT IN (:...existingIds)', {
@@ -312,8 +312,8 @@ export class UserSearchService {
         .select(['user.username', 'user.firstName', 'user.lastName'])
         .where(
           '(LOWER(user.username) LIKE LOWER(:query) OR ' +
-            'LOWER(user.firstName) LIKE LOWER(:query) OR ' +
-            'LOWER(user.lastName) LIKE LOWER(:query))',
+          'LOWER(user.firstName) LIKE LOWER(:query) OR ' +
+          'LOWER(user.lastName) LIKE LOWER(:query))',
           { query: `${query}%` },
         )
         .andWhere(options.includeInactive ? '1=1' : 'user.isActive = true')

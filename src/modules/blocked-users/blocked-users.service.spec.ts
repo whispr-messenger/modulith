@@ -8,8 +8,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { BlockedUsersService } from './blocked-users.service';
-import { BlockedUser, User, Contact } from '../entities';
-import { BlockUserDto } from '../dto';
+import { BlockedUser, User, Contact } from '../../entities';
+import { BlockUserDto } from '../../dto';
 
 describe('BlockedUsersService', () => {
   let service: BlockedUsersService;

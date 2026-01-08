@@ -20,14 +20,14 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { GroupsService } from './groups.service';
-import { CreateGroupDto, UpdateGroupDto, AddGroupMemberDto } from '../dto';
-import { Group, GroupMember, GroupRole } from '../entities';
+import { CreateGroupDto, UpdateGroupDto, AddGroupMemberDto } from '../../dto';
+import { Group, GroupMember, GroupRole } from '../../entities';
 
 @ApiTags('Groups')
 @ApiBearerAuth()
 @Controller('groups')
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) {}
+  constructor(private readonly groupsService: GroupsService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a new group' })

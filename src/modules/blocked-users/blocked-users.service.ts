@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BlockedUser, User, Contact } from '../entities';
-import { BlockUserDto } from '../dto';
+import { BlockedUser, User, Contact } from '../../entities';
+import { BlockUserDto } from '../../dto';
 
 @Injectable()
 export class BlockedUsersService {
@@ -18,7 +18,7 @@ export class BlockedUsersService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Contact)
     private readonly contactRepository: Repository<Contact>,
-  ) {}
+  ) { }
 
   async blockUser(
     userId: string,

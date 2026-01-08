@@ -15,14 +15,14 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { PrivacyService } from './privacy.service';
-import { UpdatePrivacySettingsDto } from '../dto';
-import { PrivacySettings } from '../entities';
+import { UpdatePrivacySettingsDto } from '../../dto';
+import { PrivacySettings } from '../../entities';
 
 @ApiTags('privacy')
 @ApiBearerAuth()
 @Controller('privacy')
 export class PrivacyController {
-  constructor(private readonly privacyService: PrivacyService) {}
+  constructor(private readonly privacyService: PrivacyService) { }
 
   @Get(':userId')
   @ApiOperation({ summary: 'Get user privacy settings' })

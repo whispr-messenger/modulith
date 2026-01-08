@@ -2,7 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SearchIndexService } from './search-index.service';
 import { CacheService } from './cache.service';
-import { User } from '../entities';
+import { User } from '../../entities';
 
 describe('SearchIndexService', () => {
   let service: SearchIndexService;

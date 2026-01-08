@@ -21,14 +21,14 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { BlockedUsersService } from './blocked-users.service';
-import { BlockUserDto } from '../dto';
-import { BlockedUser } from '../entities';
+import { BlockUserDto } from '../../dto';
+import { BlockedUser } from '../../entities';
 
 @ApiTags('blocked-users')
 @ApiBearerAuth()
 @Controller('blocked-users')
 export class BlockedUsersController {
-  constructor(private readonly blockedUsersService: BlockedUsersService) {}
+  constructor(private readonly blockedUsersService: BlockedUsersService) { }
 
   @Post(':userId')
   @ApiOperation({ summary: 'Block a user' })

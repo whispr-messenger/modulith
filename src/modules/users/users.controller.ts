@@ -20,14 +20,14 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { CreateUserDto, UpdateUserDto } from '../dto';
-import { User } from '../entities';
+import { CreateUserDto, UpdateUserDto } from '../../dto';
+import { User } from '../../entities';
 
 @ApiTags('users')
 @ApiBearerAuth()
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a new user' })

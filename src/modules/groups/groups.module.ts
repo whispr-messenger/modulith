@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GroupsController } from './groups.controller';
 import { GroupsService } from './groups.service';
-import { Group, GroupMember, User } from '../entities';
+import { Group, GroupMember, User } from '../../entities';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Group, GroupMember, User])],
@@ -10,4 +10,4 @@ import { Group, GroupMember, User } from '../entities';
   providers: [GroupsService],
   exports: [GroupsService],
 })
-export class GroupsModule {}
+export class GroupsModule { }

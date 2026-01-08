@@ -21,14 +21,14 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ContactsService } from './contacts.service';
-import { AddContactDto, UpdateContactDto } from '../dto';
-import { Contact } from '../entities';
+import { AddContactDto, UpdateContactDto } from '../../dto';
+import { Contact } from '../../entities';
 
 @ApiTags('contacts')
 @ApiBearerAuth()
 @Controller('contacts')
 export class ContactsController {
-  constructor(private readonly contactsService: ContactsService) {}
+  constructor(private readonly contactsService: ContactsService) { }
 
   @Post(':userId')
   @ApiOperation({ summary: 'Add a new contact' })

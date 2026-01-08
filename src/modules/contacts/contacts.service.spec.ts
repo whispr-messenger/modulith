@@ -8,8 +8,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ContactsService } from './contacts.service';
-import { Contact, User, BlockedUser } from '../entities';
-import { AddContactDto, UpdateContactDto } from '../dto';
+import { Contact, User, BlockedUser } from '../../entities';
+import { AddContactDto, UpdateContactDto } from '../../dto';
 import { PrivacyService } from '../privacy/privacy.service';
 
 describe('ContactsService', () => {
