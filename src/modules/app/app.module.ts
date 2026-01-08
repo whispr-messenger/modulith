@@ -6,6 +6,15 @@ import { TypeOrmModule, TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
 import { HealthModule } from '../heatlh/health.module';
 import { AuthModule } from '../auth/auth.module';
 
+// Import all user-service modules
+import { UsersModule } from '../users/users.module';
+import { PrivacyModule } from '../privacy/privacy.module';
+import { ContactsModule } from '../contacts/contacts.module';
+import { BlockedUsersModule } from '../blocked-users/blocked-users.module';
+import { UserSearchModule } from '../search/user-search.module';
+import { GroupsModule } from '../groups/groups.module';
+
+
 // Environment variables
 const configModuleOptions: ConfigModuleOptions = {
   isGlobal: true,
@@ -23,9 +32,9 @@ const cacheModuleAsyncOptions: CacheModuleAsyncOptions = {
 
 // Database (Postgres)
 const typeOrmModuleAsyncOptions: TypeOrmModuleAsyncOptions = {
-	imports: [ConfigModule],
-	useFactory: typeOrmModuleOptionsFactory,
-	inject: [ConfigService],
+  imports: [ConfigModule],
+  useFactory: typeOrmModuleOptionsFactory,
+  inject: [ConfigService],
 };
 
 
@@ -36,6 +45,13 @@ const typeOrmModuleAsyncOptions: TypeOrmModuleAsyncOptions = {
     TypeOrmModule.forRootAsync(typeOrmModuleAsyncOptions),
     HealthModule,
     // AuthModule,
+    // User service modules
+    UsersModule,
+    PrivacyModule,
+    ContactsModule,
+    BlockedUsersModule,
+    UserSearchModule,
+    GroupsModule,
   ],
 })
 export class AppModule { }
