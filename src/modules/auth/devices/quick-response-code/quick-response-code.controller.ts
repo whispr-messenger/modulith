@@ -1,6 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Request, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/modules/authentication/guards';
+import { JwtAuthGuard } from '../../tokens/guards';
 import { DeviceFingerprint } from '../types/device-fingerprint.interface';
 import { ScanLoginDto } from '../dto/scan-login.dto';
 import { QuickResponseCodeService } from './quick-response-code.service';

@@ -1,14 +1,14 @@
 import { Controller, Post, Body, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { BaseAuthenticationService } from '../services/base-authentication.service';
-import { JwtAuthGuard } from '../guards';
+import { PhoneAuthenticationService } from '../services/phone-authentication.service';
+import { JwtAuthGuard } from '../../tokens/guards';
 import { DeviceFingerprint } from '../../devices/types/device-fingerprint.interface';
 import { RegisterDto, LoginDto, LogoutDto } from '../dto';
 
 @ApiTags('Authentication')
 @Controller()
-export class BaseAuthenticationController {
-	constructor(private readonly authService: BaseAuthenticationService) {}
+export class PhoneAuthenticationController {
+	constructor(private readonly authService: PhoneAuthenticationService) {}
 
 	@Post('register')
 	@HttpCode(HttpStatus.CREATED)

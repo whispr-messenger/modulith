@@ -4,16 +4,17 @@ import { JwtModule, JwtModuleAsyncOptions } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
-import { BaseAuthenticationController } from './controllers/base-authentication.controller';
-import { BaseAuthenticationService, NotificationService } from './services';
-import { BackupCodesService } from '../two-factor-authentication/backup-codes/backup-codes.service';
+import { PhoneAuthenticationController } from './controllers/phone-authentication.controller';
+import { PhoneAuthenticationService, NotificationService } from './services';
 
-import { JwtAuthGuard } from './guards';
 import { jwtModuleOptionsFactory } from './config/jwt.config';
 
 import { TokensModule } from '../tokens/tokens.module';
 import { DevicesModule } from '../devices/devices.module';
 import { PhoneVerificationModule } from '../phone-verification/phone-verification.module';
+import { UserAuthService } from '../common/services/user-auth.service';
+import { CommonModule } from '../common/common.module';
+import { TwoFactorAuthenticationModule } from '../two-factor-authentication/two-factor-authentication.module';
 
 const jwtModuleAsyncOptions: JwtModuleAsyncOptions = {
 	imports: [ConfigModule],
@@ -35,23 +36,22 @@ const throttlerModuleOptions: ThrottlerModuleOptions = [
 
 @Module({
 	// The providers that will be instantiated bu the Nest injector and that may be shared at least across this module.
-	providers: [BaseAuthenticationService, BackupCodesService, JwtAuthGuard],
+	providers: [PhoneAuthenticationService],
 	// The set of controllers defined in this module which have to be instantiated.
-	controllers: [BaseAuthenticationController],
+	controllers: [PhoneAuthenticationController],
 	// The list of imported modules that export the providers which are required in this module.
 	imports: [
-		TypeOrmModule.forFeature([
-			UserAuth,
-		]),
 		JwtModule.registerAsync(jwtModuleAsyncOptions),
 		CacheModule.register(cacheConfig),
 		ThrottlerModule.forRoot(throttlerModuleOptions),
-		TokensModule,
+		CommonModule,
 		DevicesModule,
 		PhoneVerificationModule,
+		TokensModule,
+		TwoFactorAuthenticationModule,
 	],
 	// The subset of providers that are provided by this module and should be available in other modules
 	// which import this module.
-	exports: [BaseAuthenticationService, JwtAuthGuard],
+	exports: [PhoneAuthenticationService],
 })
-export class BaseAuthenticationModule {}
+export class PhoneAuthenticationModule {}

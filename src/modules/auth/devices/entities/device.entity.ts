@@ -8,7 +8,7 @@ import {
 	JoinColumn,
 	Index,
 } from 'typeorm';
-import { UserAuth } from '../common/entities/user-auth.entity';
+import { UserAuth } from '../../common/entities/user-auth.entity';
 
 @Entity('devices')
 @Index(['userId'])

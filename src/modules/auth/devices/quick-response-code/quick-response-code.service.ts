@@ -10,13 +10,13 @@ import { QRChallengeData } from './quick-response-challenge-data.interface';
 import { JwtService } from '@nestjs/jwt';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Repository } from 'typeorm';
-import { Device } from '../device.entity';
+import { Device } from '../entities/device.entity';
 import { ScanLoginDto } from '../dto/scan-login.dto';
 import { DeviceFingerprint } from '../types/device-fingerprint.interface';
-import { TokenPair } from 'src/modules/tokens/types/token-pair.interface';
-import { DevicesService } from '../devices.service';
-import { TokensService } from 'src/modules/tokens/services/tokens.service';
-import { UserAuth } from 'src/modules/two-factor-authentication/user-auth.entity';
+import { DeviceRegistrationService } from '../services/device-registration.service';
+import { TokenPair } from '../../tokens/types/token-pair.interface';
+import { TokensService } from '../../tokens/services/tokens.service';
+import { UserAuth } from '../../common/entities/user-auth.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
@@ -26,7 +26,7 @@ export class QuickResponseCodeService {
 	constructor(
 		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
 		private readonly jwtService: JwtService,
-		private readonly deviceService: DevicesService,
+		private readonly deviceRegistrationService: DeviceRegistrationService,
 		private readonly tokenService: TokensService,
 		@InjectRepository(Device)
 		private readonly deviceRepository: Repository<Device>,
@@ -79,7 +79,7 @@ export class QuickResponseCodeService {
 
 		let deviceId: string;
 		if (dto.deviceName && dto.deviceType) {
-			const device = await this.deviceService.registerDevice({
+			const device = await this.deviceRegistrationService.registerDevice({
 				userId: challengeData.userId,
 				deviceName: dto.deviceName,
 				deviceType: dto.deviceType,

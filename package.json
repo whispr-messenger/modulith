@@ -30,6 +30,7 @@
 		"@nestjs/swagger": "^11.2.4",
 		"@nestjs/throttler": "^6.5.0",
 		"@nestjs/typeorm": "^11.0.0",
+		"bcrypt": "^6.0.0",
 		"class-validator": "^0.14.3",
 		"pg": "^8.16.3",
 		"qrcode": "^1.5.4",

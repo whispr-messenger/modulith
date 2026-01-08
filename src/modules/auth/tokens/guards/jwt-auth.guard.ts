@@ -1,5 +1,5 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { TokensService } from '../../tokens/services/tokens.service';
+import { TokensService } from '../services/tokens.service';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -17,6 +17,7 @@ export class JwtAuthGuard implements CanActivate {
 			const payload = this.tokenService.validateToken(token);
 
 			const isRevoked = await this.tokenService.isTokenRevoked(payload.sub);
+
 			if (isRevoked) {
 				throw new UnauthorizedException('Token révoqué');
 			}

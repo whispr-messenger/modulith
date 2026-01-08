@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Device } from '../../modules/devices/device.entity';
-import { SmsService } from 'src/modules/phone-verification/services/sms/sms.service';
+import { SmsService } from '../../phone-verification/services/sms/sms.service';
 import { UserAuthService } from '../../common/services/user-auth.service';
 
 interface NotificationData {

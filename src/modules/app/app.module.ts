@@ -35,7 +35,7 @@ const typeOrmModuleAsyncOptions: TypeOrmModuleAsyncOptions = {
     CacheModule.registerAsync(cacheModuleAsyncOptions),
     TypeOrmModule.forRootAsync(typeOrmModuleAsyncOptions),
     HealthModule,
-    // AuthModule,
+    AuthModule,
   ],
 })
 export class AppModule { }
