@@ -1,5 +1,6 @@
-import { IsUUID, IsOptional, IsString } from 'class-validator';
-
+import { IsUUID, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { SignalKeyBundleDto } from './signal-keys.dto';
 
 export class LoginDto {
     @IsUUID()
@@ -13,7 +14,13 @@ export class LoginDto {
     @IsString()
     deviceType?: string;
 
+    /**
+     * Complete Signal Protocol key bundle
+     * Contains identity key, signed prekey, and one-time prekeys
+     * Required for devices that need end-to-end encryption
+     */
     @IsOptional()
-    @IsString()
-    publicKey?: string;
+    @ValidateNested()
+    @Type(() => SignalKeyBundleDto)
+    signalKeyBundle?: SignalKeyBundleDto;
 }

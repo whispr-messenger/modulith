@@ -70,9 +70,11 @@ describe('SignalKeysManagementController', () => {
 			);
 			rotationService.rotateSignedPreKey.mockResolvedValue(undefined);
 
+			const mockReq = { user: { id: mockUserId } };
+
 			const result = await controller.uploadSignedPreKey(
-				mockUserId,
 				newSignedPreKey,
+				mockReq,
 			);
 
 			expect(result).toEqual({
@@ -101,8 +103,10 @@ describe('SignalKeysManagementController', () => {
 				throw new BadRequestException('Invalid key');
 			});
 
+			const mockReq = { user: { id: mockUserId } };
+
 			await expect(
-				controller.uploadSignedPreKey(mockUserId, invalidKey),
+				controller.uploadSignedPreKey(invalidKey, mockReq),
 			).rejects.toThrow(BadRequestException);
 		});
 
@@ -118,8 +122,10 @@ describe('SignalKeysManagementController', () => {
 				new BadRequestException('KeyId already exists'),
 			);
 
+			const mockReq = { user: { id: mockUserId } };
+
 			await expect(
-				controller.uploadSignedPreKey(mockUserId, duplicateKey),
+				controller.uploadSignedPreKey(duplicateKey, mockReq),
 			).rejects.toThrow(BadRequestException);
 		});
 	});
@@ -134,9 +140,12 @@ describe('SignalKeysManagementController', () => {
 			validationService.validatePreKeys.mockReturnValue(undefined);
 			rotationService.replenishPreKeys.mockResolvedValue(undefined);
 
-			const result = await controller.uploadPreKeys(mockUserId, {
-				preKeys: newPreKeys,
-			});
+			const mockReq = { user: { id: mockUserId } };
+
+			const result = await controller.uploadPreKeys(
+				{ preKeys: newPreKeys },
+				mockReq,
+			);
 
 			expect(result).toEqual({
 				message: 'PreKeys uploaded successfully',
@@ -156,8 +165,10 @@ describe('SignalKeysManagementController', () => {
 				throw new BadRequestException('Empty array');
 			});
 
+			const mockReq = { user: { id: mockUserId } };
+
 			await expect(
-				controller.uploadPreKeys(mockUserId, { preKeys: invalidKeys }),
+				controller.uploadPreKeys({ preKeys: invalidKeys }, mockReq),
 			).rejects.toThrow(BadRequestException);
 		});
 	});
@@ -189,30 +200,25 @@ describe('SignalKeysManagementController', () => {
 	describe('deleteDeviceKeys', () => {
 		it('should delete keys for a device', async () => {
 			const deviceId = 'test-device-id';
-			storageService.deleteDeviceKeys.mockResolvedValue(undefined);
+			const mockReq = { user: { id: mockUserId } };
+			storageService.deleteAllKeysForUser.mockResolvedValue(undefined);
 
-			const result = await controller.deleteDeviceKeys(mockUserId, deviceId);
+			await controller.deleteDeviceKeys(deviceId, mockReq);
 
-			expect(result).toEqual({
-				message: 'Device keys deleted successfully',
-			});
-			expect(storageService.deleteDeviceKeys).toHaveBeenCalledWith(
+			expect(storageService.deleteAllKeysForUser).toHaveBeenCalledWith(
 				mockUserId,
-				deviceId,
 			);
 		});
 	});
 
 	describe('deleteUserKeys', () => {
 		it('should delete all keys for a user', async () => {
-			storageService.deleteUserKeys.mockResolvedValue(undefined);
+			const mockReq = { user: { id: mockUserId } };
+			storageService.deleteAllKeysForUser.mockResolvedValue(undefined);
 
-			const result = await controller.deleteUserKeys(mockUserId);
+			await controller.deleteAllKeys(mockReq);
 
-			expect(result).toEqual({
-				message: 'All user keys deleted successfully',
-			});
-			expect(storageService.deleteUserKeys).toHaveBeenCalledWith(mockUserId);
+			expect(storageService.deleteAllKeysForUser).toHaveBeenCalledWith(mockUserId);
 		});
 	});
 });
