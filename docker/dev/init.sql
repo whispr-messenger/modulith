@@ -14,8 +14,9 @@ GRANT ALL PRIVILEGES ON DATABASE testing TO dev_user;
 -- Se connecter à la DB dev
 \c development;
 
--- Créer le schéma et les permissions
+-- Note: La création du schéma auth est maintenant gérée par les migrations TypeORM
+-- Voir src/migrations/1736349600000-CreateAuthSchema.ts
+
+-- Permissions sur le schéma public
 GRANT CREATE ON SCHEMA public TO dev_user;
 GRANT USAGE ON SCHEMA public TO dev_user;
-
----

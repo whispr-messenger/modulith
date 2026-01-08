@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { UserAuth } from '../../common/entities/user-auth.entity';
 
-@Entity('identity_keys')
+@Entity({ name: 'identity_keys', schema: 'auth' })
 @Unique(['userId'])
 export class IdentityKey {
 	@PrimaryGeneratedColumn('uuid')

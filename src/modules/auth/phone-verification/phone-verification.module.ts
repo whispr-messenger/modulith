@@ -1,9 +1,7 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { PhoneVerificationService } from './services/phone-verification/phone-verification.service';
 import { SmsService } from './services/sms/sms.service';
 import { PhoneVerificationController } from './controllers/phone-verification.controller';
-import { UserAuth } from '../common/entities/user-auth.entity';
 import { VerificationCodeGeneratorService } from './services/verification-code-generator/verification-code-generator.service';
 import { PhoneNumberService } from './services/phone-number/phone-number.service';
 import { RateLimitService } from './services/rate-limit/rate-limit.service';
@@ -28,7 +26,7 @@ import { CommonModule } from '../common/common.module';
 		},
 	],
 	controllers: [PhoneVerificationController],
-	imports: [TypeOrmModule.forFeature([UserAuth]), CommonModule],
+	imports: [CommonModule],
 	exports: [PhoneVerificationService],
 })
 export class PhoneVerificationModule {}

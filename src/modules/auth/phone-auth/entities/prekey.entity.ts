@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { UserAuth } from '../../common/entities/user-auth.entity';
 
-@Entity('prekeys')
+@Entity({ name: 'prekeys', schema: 'auth' })
 @Index(['userId'])
 @Unique(['userId', 'keyId'])
 export class PreKey {

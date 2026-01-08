@@ -8,14 +8,15 @@ function buildSwaggerDocument(port: number) {
 		.setTitle('Whispr Messenger')
 		.setDescription('API documentation for Whispr Messenger')
 		.setVersion('1.0')
-		.addServer(`http://127.0.0.1:${port}`, 'Development')
-		.addServer('https://whispr.epitech-msc2026.me', 'Production')
+		.addServer('/', 'Current Environment')
+		.addServer(`http://127.0.0.1:${port}/api/v1`, 'Development (Local)')
+		.addServer('https://whispr.epitech-msc2026.me/api/v1', 'Production')
 		.build();
 }
 
 function createSwaggerCustomOptions(): SwaggerCustomOptions {
 	return {
-		useGlobalPrefix: true,
+		useGlobalPrefix: false,
 	};
 }
 
@@ -43,7 +44,7 @@ export function createSwaggerDocumentation(
 
 	const swaggerCustomOptions = createSwaggerCustomOptions();
 
-	SwaggerModule.setup('swagger', app, documentFactory, swaggerCustomOptions);
+	SwaggerModule.setup(swaggerRoute, app, documentFactory, swaggerCustomOptions);
 
 	logger.log(`Swagger documentation available at: http://0.0.0.0:${port}/${swaggerRoute}`);
 }

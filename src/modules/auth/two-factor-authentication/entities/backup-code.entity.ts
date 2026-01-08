@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { UserAuth } from '../../common/entities/user-auth.entity';
 
-@Entity('backup_codes')
+@Entity({ name: 'backup_codes', schema: 'auth' })
 @Index(['userId'])
 export class BackupCode {
     @PrimaryGeneratedColumn('uuid')
