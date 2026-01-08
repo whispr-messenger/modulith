@@ -42,12 +42,6 @@ const throttlerModuleOptions: ThrottlerModuleOptions = [
 	imports: [
 		TypeOrmModule.forFeature([
 			UserAuth,
-			Device,
-			BackupCode,
-			IdentityKey,
-			LoginHistory,
-			PreKey,
-			SignedPreKey,
 		]),
 		JwtModule.registerAsync(jwtModuleAsyncOptions),
 		CacheModule.register(cacheConfig),
