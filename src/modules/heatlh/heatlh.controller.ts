@@ -2,7 +2,7 @@ import { Controller, Get, Inject, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DataSource } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 
 @ApiTags('Health')
 @Controller('health')
@@ -12,7 +12,7 @@ export class HealthController {
 		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache
 	) {}
 
-	private logger = new Logger(HealthController.name);
+	private readonly logger = new Logger(HealthController.name);
 
 	@Get()
 	@ApiOperation({
