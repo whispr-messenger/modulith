@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { AppModule } from './modules/app/app.module';
 import { createSwaggerDocumentation } from './swagger';
 import { LoggingInterceptor } from './interceptors';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
 // Gestionnaire global des erreurs non capturées
 const logger = new Logger('UnhandledErrors');
@@ -38,11 +39,20 @@ async function bootstrap() {
 
   createSwaggerDocumentation(app, port, configService, globalPrefix);
 
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.REDIS,
+    options: {
+      host: configService.get<string>('REDIS_HOST'),
+      port: configService.get<number>('REDIS_PORT'),
+    }
+  });
+
   app.useGlobalInterceptors(new LoggingInterceptor());
 
   // Gérer les signaux de shutdown proprement
   app.enableShutdownHooks();
 
+  await app.startAllMicroservices();
   await app.listen(port);
 
   bootstrapLogger.log(`Application is running on: http://0.0.0.0:${port}`);
