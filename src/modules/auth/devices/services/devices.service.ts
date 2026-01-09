@@ -15,9 +15,7 @@ import { DeviceRepository } from '../repositories/device.repository';
 export class DevicesService {
 	private readonly logger = new Logger(DevicesService.name);
 
-	constructor(private readonly deviceRepository: DeviceRepository) {}
-
-	// ============ Device Retrieval ============
+	constructor(private readonly deviceRepository: DeviceRepository) { }
 
 	async getUserDevices(userId: string): Promise<Device[]> {
 		return this.deviceRepository.find({
@@ -41,8 +39,6 @@ export class DevicesService {
 
 		return device;
 	}
-
-	// ============ Revocation ============
 
 	async revokeDevice(userId: string, deviceId: string): Promise<void> {
 		const device = await this.deviceRepository.findByUserIdAndDeviceId(userId, deviceId);
