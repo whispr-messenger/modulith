@@ -5,6 +5,7 @@ import { cacheModuleOptionsFactory, typeOrmModuleOptionsFactory } from './config
 import { TypeOrmModule, TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
 import { HealthModule } from '../heatlh/health.module';
 import { AuthModule } from '../auth/auth.module';
+import { LifecycleService } from './services/lifecycle.service';
 
 // Environment variables
 const configModuleOptions: ConfigModuleOptions = {
@@ -36,5 +37,6 @@ const typeOrmModuleAsyncOptions: TypeOrmModuleAsyncOptions = {
     HealthModule,
     AuthModule,
   ],
+  providers: [LifecycleService],
 })
 export class AppModule { }
