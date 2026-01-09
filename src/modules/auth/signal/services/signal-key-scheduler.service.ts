@@ -60,33 +60,33 @@ export class SignalKeySchedulerService {
 	}
 
 	/**
-	 * Check for users with low prekeys every hour
+	 * Check for devices with low prekeys every hour
 	 * 
-	 * Monitors prekey availability and logs warnings for users who need
+	 * Monitors prekey availability and logs warnings for devices that need
 	 * to replenish their prekeys. In a production system, this would
 	 * trigger notifications to clients.
 	 */
 	@Cron(CronExpression.EVERY_HOUR)
 	async checkUsersWithLowPrekeys(): Promise<void> {
-		this.logger.debug('Checking users with low prekeys');
+		this.logger.debug('Checking devices with low prekeys');
 
 		try {
-			const usersWithLowPrekeys = await this.findUsersWithLowPrekeys();
+			const devicesWithLowPrekeys = await this.findDevicesWithLowPrekeys();
 
 			this.lastPreKeyCheckTime = new Date();
 
-			if (usersWithLowPrekeys.length > 0) {
+			if (devicesWithLowPrekeys.length > 0) {
 				this.logger.warn(
-					`Found ${usersWithLowPrekeys.length} users with low prekeys: ${usersWithLowPrekeys.map((u) => `${u.userId}(${u.count})`).join(', ')}`,
+					`Found ${devicesWithLowPrekeys.length} devices with low prekeys: ${devicesWithLowPrekeys.map((d) => `${d.userId}:${d.deviceId}(${d.count})`).join(', ')}`,
 				);
 
 				// In production, emit events here for notification service
-				// this.eventEmitter.emit('signal.prekeys.low', usersWithLowPrekeys);
+				// this.eventEmitter.emit('signal.prekeys.low', devicesWithLowPrekeys);
 			} else {
-				this.logger.debug('All users have sufficient prekeys');
+				this.logger.debug('All devices have sufficient prekeys');
 			}
 		} catch (error) {
-			this.logger.error('Failed to check users with low prekeys', error.stack);
+			this.logger.error('Failed to check devices with low prekeys', error.stack);
 		}
 	}
 
@@ -122,17 +122,18 @@ export class SignalKeySchedulerService {
 					`Successfully cleaned up ${oldPreKeys.length} old unused PreKeys`,
 				);
 
-				// Group by user for better visibility
-				const byUser = oldPreKeys.reduce(
+				// Group by user and device for better visibility
+				const byUserDevice = oldPreKeys.reduce(
 					(acc, pk) => {
-						acc[pk.userId] = (acc[pk.userId] || 0) + 1;
+						const key = `${pk.userId}:${pk.deviceId}`;
+						acc[key] = (acc[key] || 0) + 1;
 						return acc;
 					},
 					{} as Record<string, number>,
 				);
 
 				this.logger.debug(
-					`PreKeys cleaned per user: ${JSON.stringify(byUser)}`,
+					`PreKeys cleaned per device: ${JSON.stringify(byUserDevice)}`,
 				);
 			} else {
 				this.logger.debug('No old unused PreKeys to clean up');
@@ -146,24 +147,27 @@ export class SignalKeySchedulerService {
 	}
 
 	/**
-	 * Find users who have fewer than 20 unused prekeys
+	 * Find devices that have fewer than 20 unused prekeys
 	 * 
-	 * @returns Array of objects with userId and prekey count
+	 * @returns Array of objects with userId, deviceId and prekey count
 	 */
-	private async findUsersWithLowPrekeys(): Promise<
-		Array<{ userId: string; count: number }>
+	private async findDevicesWithLowPrekeys(): Promise<
+		Array<{ userId: string; deviceId: string; count: number }>
 	> {
 		const result = await this.preKeyRepository
 			.createQueryBuilder('prekey')
 			.select('prekey.userId', 'userId')
+			.addSelect('prekey.deviceId', 'deviceId')
 			.addSelect('COUNT(*)', 'count')
 			.where('prekey.isUsed = false')
 			.groupBy('prekey.userId')
+			.addGroupBy('prekey.deviceId')
 			.having('COUNT(*) < :threshold', { threshold: 20 })
 			.getRawMany();
 
 		return result.map((r) => ({
 			userId: r.userId,
+			deviceId: r.deviceId,
 			count: parseInt(r.count, 10),
 		}));
 	}

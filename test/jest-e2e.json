@@ -4,6 +4,13 @@
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
-  }
+    "^.+\\.(t|j)s$": ["ts-jest", {
+      "tsconfig": {
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true
+      }
+    }]
+  },
+  "setupFilesAfterEnv": ["<rootDir>/setup-e2e.ts"],
+  "testTimeout": 30000
 }

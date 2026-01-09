@@ -9,19 +9,19 @@ export class IdentityKeyRepository extends Repository<IdentityKey> {
 	}
 
 	/**
-	 * Find the identity key for a specific user
+	 * Find the identity key for a specific user and device
 	 */
-	async findByUserId(userId: string): Promise<IdentityKey | null> {
+	async findByUserIdAndDeviceId(userId: string, deviceId: string): Promise<IdentityKey | null> {
 		return this.findOne({
-			where: { userId },
+			where: { userId, deviceId },
 		});
 	}
 
 	/**
-	 * Create or update an identity key for a user
+	 * Create or update an identity key for a user and device
 	 */
-	async upsertIdentityKey(userId: string, publicKey: string): Promise<IdentityKey> {
-		const existingKey = await this.findByUserId(userId);
+	async upsertIdentityKey(userId: string, deviceId: string, publicKey: string): Promise<IdentityKey> {
+		const existingKey = await this.findByUserIdAndDeviceId(userId, deviceId);
 
 		if (existingKey) {
 			existingKey.publicKey = publicKey;
@@ -31,6 +31,7 @@ export class IdentityKeyRepository extends Repository<IdentityKey> {
 
 		const newKey = this.create({
 			userId,
+			deviceId,
 			publicKey,
 		});
 
@@ -38,7 +39,14 @@ export class IdentityKeyRepository extends Repository<IdentityKey> {
 	}
 
 	/**
-	 * Delete identity key for a user
+	 * Delete identity key for a user and device
+	 */
+	async deleteByUserIdAndDeviceId(userId: string, deviceId: string): Promise<void> {
+		await this.delete({ userId, deviceId });
+	}
+
+	/**
+	 * Delete all identity keys for a user (all devices)
 	 */
 	async deleteByUserId(userId: string): Promise<void> {
 		await this.delete({ userId });

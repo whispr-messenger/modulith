@@ -17,7 +17,7 @@ export class SignalPreKeyBundleService {
 	constructor(private readonly keyStorage: SignalKeyStorageService) {}
 
 	/**
-	 * Get a complete key bundle for a user to initiate an encrypted session
+	 * Get a complete key bundle for a user's device to initiate an encrypted session
 	 * 
 	 * This method assembles all the public keys needed for X3DH key exchange:
 	 * - Identity Key (long-term)
@@ -25,44 +25,44 @@ export class SignalPreKeyBundleService {
 	 * - PreKey (one-time, optional)
 	 * 
 	 * @param userId - The user's unique identifier
-	 * @param deviceId - Optional device ID for device-specific keys
+	 * @param deviceId - The device's unique identifier
 	 * @returns Complete key bundle for X3DH
-	 * @throws NotFoundException if user has no keys registered
+	 * @throws NotFoundException if device has no keys registered
 	 */
 	async getBundleForUser(
 		userId: string,
-		deviceId?: string,
+		deviceId: string,
 	): Promise<KeyBundleResponseDto> {
-		this.logger.log(`Building key bundle for user ${userId}${deviceId ? ` (device: ${deviceId})` : ''}`);
+		this.logger.log(`Building key bundle for user ${userId}, device ${deviceId}`);
 
 		// Retrieve the identity key
-		const identityKey = await this.keyStorage.getIdentityKey(userId);
+		const identityKey = await this.keyStorage.getIdentityKey(userId, deviceId);
 		if (!identityKey) {
 			throw new NotFoundException(
-				`No identity key found for user ${userId}. User may not have registered encryption keys.`,
+				`No identity key found for user ${userId}, device ${deviceId}. Device may not have registered encryption keys.`,
 			);
 		}
 
 		// Retrieve the active signed prekey
-		const signedPreKey = await this.keyStorage.getActiveSignedPreKey(userId);
+		const signedPreKey = await this.keyStorage.getActiveSignedPreKey(userId, deviceId);
 		if (!signedPreKey) {
 			throw new NotFoundException(
-				`No active signed prekey found for user ${userId}. Keys may have expired.`,
+				`No active signed prekey found for user ${userId}, device ${deviceId}. Keys may have expired.`,
 			);
 		}
 
 		// Retrieve an unused prekey (optional - may not be available)
-		const preKey = await this.keyStorage.getUnusedPreKey(userId);
+		const preKey = await this.keyStorage.getUnusedPreKey(userId, deviceId);
 
 		// Log warning if no prekeys are available
 		if (!preKey) {
 			this.logger.warn(
-				`No unused prekeys available for user ${userId}. Sessions can still be established but without forward secrecy guarantee.`,
+				`No unused prekeys available for user ${userId}, device ${deviceId}. Sessions can still be established but without forward secrecy guarantee.`,
 			);
 		} else {
 			// Mark the prekey as used immediately
 			await this.keyStorage.markPreKeyAsUsed(preKey.id);
-			this.logger.debug(`Marked prekey ${preKey.keyId} as used for user ${userId}`);
+			this.logger.debug(`Marked prekey ${preKey.keyId} as used for user ${userId}, device ${deviceId}`);
 		}
 
 		// Build and return the bundle
@@ -84,7 +84,7 @@ export class SignalPreKeyBundleService {
 		};
 
 		this.logger.log(
-			`Successfully built key bundle for user ${userId} (has prekey: ${!!preKey})`,
+			`Successfully built key bundle for user ${userId}, device ${deviceId} (has prekey: ${!!preKey})`,
 		);
 
 		return bundle;
@@ -104,20 +104,21 @@ export class SignalPreKeyBundleService {
 	}
 
 	/**
-	 * Get the prekey status for a user
+	 * Get the prekey status for a device
 	 * 
 	 * Returns information about available prekeys and whether
-	 * the user needs to upload more.
+	 * the device needs to upload more.
 	 * 
 	 * @param userId - The user's unique identifier
+	 * @param deviceId - The device's unique identifier
 	 * @returns PreKey status information
 	 */
-	async getPreKeyStatus(userId: string): Promise<PreKeyStatusDto> {
-		this.logger.debug(`Checking prekey status for user ${userId}`);
+	async getPreKeyStatus(userId: string, deviceId: string): Promise<PreKeyStatusDto> {
+		this.logger.debug(`Checking prekey status for user ${userId}, device ${deviceId}`);
 
 		const [availableCount, hasActiveSignedPreKey] = await Promise.all([
-			this.keyStorage.getUnusedPreKeyCount(userId),
-			this.keyStorage.getActiveSignedPreKey(userId).then((key) => !!key),
+			this.keyStorage.getUnusedPreKeyCount(userId, deviceId),
+			this.keyStorage.getActiveSignedPreKey(userId, deviceId).then((key) => !!key),
 		]);
 
 		// Calculate how many prekeys should be uploaded
@@ -128,13 +129,13 @@ export class SignalPreKeyBundleService {
 
 		if (isLow) {
 			this.logger.warn(
-				`User ${userId} is running low on prekeys (${availableCount} remaining)`,
+				`User ${userId}, device ${deviceId} is running low on prekeys (${availableCount} remaining)`,
 			);
 		}
 
 		if (!hasActiveSignedPreKey) {
 			this.logger.warn(
-				`User ${userId} has no active signed prekey. Keys may have expired.`,
+				`User ${userId}, device ${deviceId} has no active signed prekey. Keys may have expired.`,
 			);
 		}
 
@@ -149,37 +150,39 @@ export class SignalPreKeyBundleService {
 	}
 
 	/**
-	 * Check if a user needs to replenish their prekeys
+	 * Check if a device needs to replenish their prekeys
 	 * 
 	 * @param userId - The user's unique identifier
-	 * @returns true if user should upload more prekeys
+	 * @param deviceId - The device's unique identifier
+	 * @returns true if device should upload more prekeys
 	 */
-	async needsPreKeyReplenishment(userId: string): Promise<boolean> {
-		const count = await this.keyStorage.getUnusedPreKeyCount(userId);
+	async needsPreKeyReplenishment(userId: string, deviceId: string): Promise<boolean> {
+		const count = await this.keyStorage.getUnusedPreKeyCount(userId, deviceId);
 		return count < this.MIN_PREKEYS_THRESHOLD;
 	}
 
 	/**
 	 * Get multiple key bundles (useful for group operations)
 	 * 
-	 * @param userIds - Array of user IDs
-	 * @returns Map of userId to KeyBundleResponse
+	 * @param userDevices - Array of {userId, deviceId} pairs
+	 * @returns Map of "userId:deviceId" to KeyBundleResponse
 	 */
-	async getBundlesForUsers(
-		userIds: string[],
+	async getBundlesForDevices(
+		userDevices: Array<{ userId: string; deviceId: string }>,
 	): Promise<Map<string, KeyBundleResponseDto>> {
-		this.logger.log(`Building key bundles for ${userIds.length} users`);
+		this.logger.log(`Building key bundles for ${userDevices.length} devices`);
 
 		const bundles = new Map<string, KeyBundleResponseDto>();
 
 		await Promise.all(
-			userIds.map(async (userId) => {
+			userDevices.map(async ({ userId, deviceId }) => {
 				try {
-					const bundle = await this.getBundleForUser(userId);
-					bundles.set(userId, bundle);
+					const bundle = await this.getBundleForUser(userId, deviceId);
+					const key = `${userId}:${deviceId}`;
+					bundles.set(key, bundle);
 				} catch (error) {
 					this.logger.error(
-						`Failed to get bundle for user ${userId}`,
+						`Failed to get bundle for user ${userId}, device ${deviceId}`,
 						error.stack,
 					);
 					// Don't add to map if failed
@@ -188,7 +191,7 @@ export class SignalPreKeyBundleService {
 		);
 
 		this.logger.log(
-			`Successfully built ${bundles.size}/${userIds.length} key bundles`,
+			`Successfully built ${bundles.size}/${userDevices.length} key bundles`,
 		);
 
 		return bundles;

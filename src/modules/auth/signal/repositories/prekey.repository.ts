@@ -9,22 +9,23 @@ export class PreKeyRepository extends Repository<PreKey> {
 	}
 
 	/**
-	 * Find all prekeys for a user
+	 * Find all prekeys for a user and device
 	 */
-	async findByUserId(userId: string): Promise<PreKey[]> {
+	async findByUserIdAndDeviceId(userId: string, deviceId: string): Promise<PreKey[]> {
 		return this.find({
-			where: { userId },
+			where: { userId, deviceId },
 			order: { createdAt: 'ASC' },
 		});
 	}
 
 	/**
-	 * Find all unused prekeys for a user
+	 * Find all unused prekeys for a user and device
 	 */
-	async findUnusedByUserId(userId: string): Promise<PreKey[]> {
+	async findUnusedByUserIdAndDeviceId(userId: string, deviceId: string): Promise<PreKey[]> {
 		return this.find({
 			where: {
 				userId,
+				deviceId,
 				isUsed: false,
 			},
 			order: { createdAt: 'ASC' },
@@ -32,11 +33,11 @@ export class PreKeyRepository extends Repository<PreKey> {
 	}
 
 	/**
-	 * Get a random unused prekey for a user
+	 * Get a random unused prekey for a user and device
 	 */
-	async getRandomUnusedPreKey(userId: string): Promise<PreKey | null> {
-		const unusedKeys = await this.findUnusedByUserId(userId);
-		
+	async getRandomUnusedPreKey(userId: string, deviceId: string): Promise<PreKey | null> {
+		const unusedKeys = await this.findUnusedByUserIdAndDeviceId(userId, deviceId);
+
 		if (unusedKeys.length === 0) {
 			return null;
 		}
@@ -47,12 +48,13 @@ export class PreKeyRepository extends Repository<PreKey> {
 	}
 
 	/**
-	 * Count unused prekeys for a user
+	 * Count unused prekeys for a user and device
 	 */
-	async countUnusedByUserId(userId: string): Promise<number> {
+	async countUnusedByUserIdAndDeviceId(userId: string, deviceId: string): Promise<number> {
 		return this.count({
 			where: {
 				userId,
+				deviceId,
 				isUsed: false,
 			},
 		});
@@ -70,11 +72,13 @@ export class PreKeyRepository extends Repository<PreKey> {
 	 */
 	async createPreKeys(
 		userId: string,
+		deviceId: string,
 		preKeys: Array<{ keyId: number; publicKey: string }>,
 	): Promise<PreKey[]> {
 		const entities = preKeys.map((pk) =>
 			this.create({
 				userId,
+				deviceId,
 				keyId: pk.keyId,
 				publicKey: pk.publicKey,
 				isOneTime: true,
@@ -127,7 +131,14 @@ export class PreKeyRepository extends Repository<PreKey> {
 	}
 
 	/**
-	 * Delete all prekeys for a user
+	 * Delete all prekeys for a user and device
+	 */
+	async deleteByUserIdAndDeviceId(userId: string, deviceId: string): Promise<void> {
+		await this.delete({ userId, deviceId });
+	}
+
+	/**
+	 * Delete all prekeys for a user (all devices)
 	 */
 	async deleteByUserId(userId: string): Promise<void> {
 		await this.delete({ userId });

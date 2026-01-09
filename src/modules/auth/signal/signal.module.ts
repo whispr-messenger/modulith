@@ -28,6 +28,10 @@ import {
 	SignalKeysHealthController,
 } from './controllers';
 
+// Import DevicesModule for device ownership verification
+import { DevicesModule } from '../devices/devices.module';
+import { TokensModule } from '../tokens/tokens.module';
+
 /**
  * Signal Protocol Module
  * 
@@ -48,6 +52,10 @@ import {
 		TypeOrmModule.forFeature([IdentityKey, SignedPreKey, PreKey]),
 		// Enable scheduled tasks (cron jobs)
 		ScheduleModule.forRoot(),
+		// Import DevicesModule for device ownership verification
+		DevicesModule,
+		// Import TokensModule for JWT authentication guards
+		TokensModule,
 	],
 	controllers: [
 		// Public endpoints for key retrieval
@@ -82,4 +90,4 @@ import {
 		SignalKeySchedulerService,
 	],
 })
-export class SignalModule {}
+export class SignalModule { }

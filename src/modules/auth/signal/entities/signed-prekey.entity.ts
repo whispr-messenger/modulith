@@ -11,14 +11,17 @@ import {
 import { UserAuth } from '../../common/entities/user-auth.entity';
 
 @Entity({ name: 'signed_prekeys', schema: 'auth' })
-@Index(['userId'])
-@Unique(['userId', 'keyId'])
+@Index(['userId', 'deviceId'])
+@Unique(['userId', 'deviceId', 'keyId'])
 export class SignedPreKey {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
 
 	@Column({ name: 'user_id', type: 'uuid' })
 	userId: string;
+
+	@Column({ name: 'device_id', type: 'uuid' })
+	deviceId: string;
 
 	@Column({ name: 'key_id', type: 'integer' })
 	keyId: number;

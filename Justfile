@@ -41,3 +41,20 @@ shell:
 
 test:
     docker compose -f docker/dev/compose.yml exec -it nestjs npm run test
+
+test-e2e:
+    #!/bin/bash
+    echo "Starting E2E tests..."
+    # Ensure Docker services are running
+    docker compose -f docker/dev/compose.yml up -d postgres redis
+    # Wait for services to be healthy
+    echo "Waiting for services to be ready..."
+    docker compose -f docker/dev/compose.yml exec postgres pg_isready -U dev_user -d development
+    docker compose -f docker/dev/compose.yml exec redis redis-cli ping
+    # Run E2E tests from host (not in container)
+    echo "Running E2E tests..."
+    npm run test:e2e
+    # Cleanup Docker services
+    echo "Cleaning up Docker services..."
+    docker compose -f docker/dev/compose.yml down -v
+    echo "E2E tests completed"

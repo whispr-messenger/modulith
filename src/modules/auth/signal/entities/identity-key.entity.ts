@@ -11,13 +11,16 @@ import {
 import { UserAuth } from '../../common/entities/user-auth.entity';
 
 @Entity({ name: 'identity_keys', schema: 'auth' })
-@Unique(['userId'])
+@Unique(['userId', 'deviceId'])
 export class IdentityKey {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
 
 	@Column({ name: 'user_id', type: 'uuid' })
 	userId: string;
+
+	@Column({ name: 'device_id', type: 'uuid' })
+	deviceId: string;
 
 	@Column({ name: 'public_key', type: 'text' })
 	publicKey: string;

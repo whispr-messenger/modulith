@@ -23,24 +23,26 @@ export class SignalKeyRotationService {
 	) {}
 
 	/**
-	 * Rotate the signed prekey for a user
+	 * Rotate the signed prekey for a user and device
 	 * 
 	 * This should be called periodically (recommended every 7 days) to maintain
 	 * forward secrecy. Old signed prekeys are kept for a grace period to allow
 	 * pending sessions to complete.
 	 * 
 	 * @param userId - The user's unique identifier
+	 * @param deviceId - The device's unique identifier
 	 * @param newSignedPreKey - The new signed prekey to store
 	 */
 	async rotateSignedPreKey(
 		userId: string,
+		deviceId: string,
 		newSignedPreKey: SignedPreKeyDto,
 	): Promise<void> {
-		this.logger.log(`Rotating signed prekey for user ${userId}`);
+		this.logger.log(`Rotating signed prekey for user ${userId}, device ${deviceId}`);
 
 		try {
 			// Store the new signed prekey
-			await this.keyStorage.storeSignedPreKey(userId, newSignedPreKey);
+			await this.keyStorage.storeSignedPreKey(userId, deviceId, newSignedPreKey);
 
 			// Optional: Delete expired signed prekeys (older than 30 days)
 			// Keep recent ones for a grace period
@@ -60,23 +62,25 @@ export class SignalKeyRotationService {
 	}
 
 	/**
-	 * Replenish prekeys for a user
+	 * Replenish prekeys for a user and device
 	 * 
-	 * Adds new one-time prekeys to the user's pool. This should be called
+	 * Adds new one-time prekeys to the device's pool. This should be called
 	 * when the available prekey count falls below the threshold.
 	 * 
 	 * @param userId - The user's unique identifier
+	 * @param deviceId - The device's unique identifier
 	 * @param newPreKeys - Array of new prekeys to add
 	 */
 	async replenishPreKeys(
 		userId: string,
+		deviceId: string,
 		newPreKeys: PreKeyDto[],
 	): Promise<void> {
-		this.logger.log(`Replenishing ${newPreKeys.length} prekeys for user ${userId}`);
+		this.logger.log(`Replenishing ${newPreKeys.length} prekeys for user ${userId}, device ${deviceId}`);
 
 		try {
 			// Validate that we're not adding too many prekeys
-			const currentCount = await this.keyStorage.getUnusedPreKeyCount(userId);
+			const currentCount = await this.keyStorage.getUnusedPreKeyCount(userId, deviceId);
 			const totalAfterReplenish = currentCount + newPreKeys.length;
 
 			if (totalAfterReplenish > 200) {
@@ -86,10 +90,10 @@ export class SignalKeyRotationService {
 			}
 
 			// Store the new prekeys
-			await this.keyStorage.storePreKeys(userId, newPreKeys);
+			await this.keyStorage.storePreKeys(userId, deviceId, newPreKeys);
 
 			this.logger.log(
-				`Successfully replenished prekeys for user ${userId}. New total: ${totalAfterReplenish}`,
+				`Successfully replenished prekeys for user ${userId}, device ${deviceId}. New total: ${totalAfterReplenish}`,
 			);
 		} catch (error) {
 			this.logger.error(
@@ -101,21 +105,22 @@ export class SignalKeyRotationService {
 	}
 
 	/**
-	 * Check if a user has low prekeys
+	 * Check if a device has low prekeys
 	 * 
-	 * Returns true if the user's available prekey count is below the threshold,
+	 * Returns true if the device's available prekey count is below the threshold,
 	 * indicating they should upload more prekeys.
 	 * 
 	 * @param userId - The user's unique identifier
+	 * @param deviceId - The device's unique identifier
 	 * @returns true if prekeys are below threshold
 	 */
-	async checkLowPreKeys(userId: string): Promise<boolean> {
-		const count = await this.keyStorage.getUnusedPreKeyCount(userId);
+	async checkLowPreKeys(userId: string, deviceId: string): Promise<boolean> {
+		const count = await this.keyStorage.getUnusedPreKeyCount(userId, deviceId);
 		const isLow = count < this.MIN_PREKEYS_THRESHOLD;
 
 		if (isLow) {
 			this.logger.warn(
-				`User ${userId} has low prekeys: ${count} remaining (threshold: ${this.MIN_PREKEYS_THRESHOLD})`,
+				`User ${userId}, device ${deviceId} has low prekeys: ${count} remaining (threshold: ${this.MIN_PREKEYS_THRESHOLD})`,
 			);
 		}
 
@@ -123,19 +128,20 @@ export class SignalKeyRotationService {
 	}
 
 	/**
-	 * Check if a user's signed prekey needs rotation
+	 * Check if a device's signed prekey needs rotation
 	 * 
 	 * Returns true if the current signed prekey is expiring soon (within 1 day)
 	 * or has already expired.
 	 * 
 	 * @param userId - The user's unique identifier
+	 * @param deviceId - The device's unique identifier
 	 * @returns true if signed prekey needs rotation
 	 */
-	async needsSignedPreKeyRotation(userId: string): Promise<boolean> {
-		const signedPreKey = await this.keyStorage.getActiveSignedPreKey(userId);
+	async needsSignedPreKeyRotation(userId: string, deviceId: string): Promise<boolean> {
+		const signedPreKey = await this.keyStorage.getActiveSignedPreKey(userId, deviceId);
 
 		if (!signedPreKey) {
-			this.logger.warn(`User ${userId} has no active signed prekey`);
+			this.logger.warn(`User ${userId}, device ${deviceId} has no active signed prekey`);
 			return true;
 		}
 
@@ -147,7 +153,7 @@ export class SignalKeyRotationService {
 
 		if (needsRotation) {
 			this.logger.warn(
-				`User ${userId} signed prekey expires at ${signedPreKey.expiresAt}. Rotation recommended.`,
+				`User ${userId}, device ${deviceId} signed prekey expires at ${signedPreKey.expiresAt}. Rotation recommended.`,
 			);
 		}
 
@@ -155,14 +161,15 @@ export class SignalKeyRotationService {
 	}
 
 	/**
-	 * Get rotation recommendations for a user
+	 * Get rotation recommendations for a device
 	 * 
 	 * Returns information about what keys need to be rotated/replenished.
 	 * 
 	 * @param userId - The user's unique identifier
+	 * @param deviceId - The device's unique identifier
 	 * @returns Object with rotation recommendations
 	 */
-	async getRotationRecommendations(userId: string): Promise<{
+	async getRotationRecommendations(userId: string, deviceId: string): Promise<{
 		needsPreKeyReplenishment: boolean;
 		needsSignedPreKeyRotation: boolean;
 		availablePreKeys: number;
@@ -171,10 +178,10 @@ export class SignalKeyRotationService {
 	}> {
 		const [needsPreKeys, needsRotation, availablePreKeys, signedPreKey] =
 			await Promise.all([
-				this.checkLowPreKeys(userId),
-				this.needsSignedPreKeyRotation(userId),
-				this.keyStorage.getUnusedPreKeyCount(userId),
-				this.keyStorage.getActiveSignedPreKey(userId),
+				this.checkLowPreKeys(userId, deviceId),
+				this.needsSignedPreKeyRotation(userId, deviceId),
+				this.keyStorage.getUnusedPreKeyCount(userId, deviceId),
+				this.keyStorage.getActiveSignedPreKey(userId, deviceId),
 			]);
 
 		const recommendedUpload = needsPreKeys ? 100 - availablePreKeys : 0;

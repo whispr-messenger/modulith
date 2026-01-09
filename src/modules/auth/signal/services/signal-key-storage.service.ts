@@ -26,17 +26,18 @@ export class SignalKeyStorageService {
 	) {}
 
 	/**
-	 * Store or update the identity key for a user
+	 * Store or update the identity key for a user and device
 	 * 
 	 * @param userId - The user's unique identifier
+	 * @param deviceId - The device's unique identifier
 	 * @param identityKey - The public part of the identity key (base64 encoded)
 	 * @returns The stored IdentityKey entity
 	 */
-	async storeIdentityKey(userId: string, identityKey: string): Promise<IdentityKey> {
-		this.logger.log(`Storing identity key for user ${userId}`);
+	async storeIdentityKey(userId: string, deviceId: string, identityKey: string): Promise<IdentityKey> {
+		this.logger.log(`Storing identity key for user ${userId}, device ${deviceId}`);
 
 		try {
-			return await this.identityKeyRepository.upsertIdentityKey(userId, identityKey);
+			return await this.identityKeyRepository.upsertIdentityKey(userId, deviceId, identityKey);
 		} catch (error) {
 			this.logger.error(`Failed to store identity key for user ${userId}`, error.stack);
 			throw error;
@@ -44,17 +45,19 @@ export class SignalKeyStorageService {
 	}
 
 	/**
-	 * Store a new signed prekey for a user
+	 * Store a new signed prekey for a user and device
 	 * 
 	 * @param userId - The user's unique identifier
+	 * @param deviceId - The device's unique identifier
 	 * @param signedPreKey - The signed prekey data (keyId, publicKey, signature)
 	 * @returns The stored SignedPreKey entity
 	 */
 	async storeSignedPreKey(
 		userId: string,
+		deviceId: string,
 		signedPreKey: SignedPreKeyDto,
 	): Promise<SignedPreKey> {
-		this.logger.log(`Storing signed prekey ${signedPreKey.keyId} for user ${userId}`);
+		this.logger.log(`Storing signed prekey ${signedPreKey.keyId} for user ${userId}, device ${deviceId}`);
 
 		try {
 			// SignedPreKeys typically expire after 7 days
@@ -63,6 +66,7 @@ export class SignalKeyStorageService {
 
 			return await this.signedPreKeyRepository.createSignedPreKey(
 				userId,
+				deviceId,
 				signedPreKey.keyId,
 				signedPreKey.publicKey,
 				signedPreKey.signature,
@@ -78,18 +82,20 @@ export class SignalKeyStorageService {
 	}
 
 	/**
-	 * Store multiple prekeys for a user
+	 * Store multiple prekeys for a user and device
 	 * 
 	 * @param userId - The user's unique identifier
+	 * @param deviceId - The device's unique identifier
 	 * @param preKeys - Array of prekeys to store
 	 * @returns Array of stored PreKey entities
 	 */
-	async storePreKeys(userId: string, preKeys: PreKeyDto[]): Promise<PreKey[]> {
-		this.logger.log(`Storing ${preKeys.length} prekeys for user ${userId}`);
+	async storePreKeys(userId: string, deviceId: string, preKeys: PreKeyDto[]): Promise<PreKey[]> {
+		this.logger.log(`Storing ${preKeys.length} prekeys for user ${userId}, device ${deviceId}`);
 
 		try {
 			return await this.preKeyRepository.createPreKeys(
 				userId,
+				deviceId,
 				preKeys.map((pk) => ({
 					keyId: pk.keyId,
 					publicKey: pk.publicKey,
@@ -102,16 +108,17 @@ export class SignalKeyStorageService {
 	}
 
 	/**
-	 * Retrieve the identity key for a user
+	 * Retrieve the identity key for a user and device
 	 * 
 	 * @param userId - The user's unique identifier
-	 * @returns The user's IdentityKey or null if not found
+	 * @param deviceId - The device's unique identifier
+	 * @returns The device's IdentityKey or null if not found
 	 */
-	async getIdentityKey(userId: string): Promise<IdentityKey | null> {
-		this.logger.debug(`Retrieving identity key for user ${userId}`);
+	async getIdentityKey(userId: string, deviceId: string): Promise<IdentityKey | null> {
+		this.logger.debug(`Retrieving identity key for user ${userId}, device ${deviceId}`);
 
 		try {
-			return await this.identityKeyRepository.findByUserId(userId);
+			return await this.identityKeyRepository.findByUserIdAndDeviceId(userId, deviceId);
 		} catch (error) {
 			this.logger.error(
 				`Failed to retrieve identity key for user ${userId}`,
@@ -122,16 +129,17 @@ export class SignalKeyStorageService {
 	}
 
 	/**
-	 * Retrieve the most recent active (non-expired) signed prekey for a user
+	 * Retrieve the most recent active (non-expired) signed prekey for a user and device
 	 * 
 	 * @param userId - The user's unique identifier
+	 * @param deviceId - The device's unique identifier
 	 * @returns The active SignedPreKey or null if none available
 	 */
-	async getActiveSignedPreKey(userId: string): Promise<SignedPreKey | null> {
-		this.logger.debug(`Retrieving active signed prekey for user ${userId}`);
+	async getActiveSignedPreKey(userId: string, deviceId: string): Promise<SignedPreKey | null> {
+		this.logger.debug(`Retrieving active signed prekey for user ${userId}, device ${deviceId}`);
 
 		try {
-			return await this.signedPreKeyRepository.findActiveByUserId(userId);
+			return await this.signedPreKeyRepository.findActiveByUserIdAndDeviceId(userId, deviceId);
 		} catch (error) {
 			this.logger.error(
 				`Failed to retrieve active signed prekey for user ${userId}`,
@@ -142,19 +150,20 @@ export class SignalKeyStorageService {
 	}
 
 	/**
-	 * Retrieve a random unused prekey for a user
+	 * Retrieve a random unused prekey for a user and device
 	 * 
 	 * This method is used when building a key bundle for X3DH.
 	 * It selects a random prekey to improve security through unpredictability.
 	 * 
 	 * @param userId - The user's unique identifier
+	 * @param deviceId - The device's unique identifier
 	 * @returns An unused PreKey or null if none available
 	 */
-	async getUnusedPreKey(userId: string): Promise<PreKey | null> {
-		this.logger.debug(`Retrieving unused prekey for user ${userId}`);
+	async getUnusedPreKey(userId: string, deviceId: string): Promise<PreKey | null> {
+		this.logger.debug(`Retrieving unused prekey for user ${userId}, device ${deviceId}`);
 
 		try {
-			return await this.preKeyRepository.getRandomUnusedPreKey(userId);
+			return await this.preKeyRepository.getRandomUnusedPreKey(userId, deviceId);
 		} catch (error) {
 			this.logger.error(
 				`Failed to retrieve unused prekey for user ${userId}`,
@@ -165,18 +174,19 @@ export class SignalKeyStorageService {
 	}
 
 	/**
-	 * Get the count of unused prekeys for a user
+	 * Get the count of unused prekeys for a user and device
 	 * 
 	 * This is useful for monitoring and triggering replenishment when low.
 	 * 
 	 * @param userId - The user's unique identifier
+	 * @param deviceId - The device's unique identifier
 	 * @returns The number of unused prekeys available
 	 */
-	async getUnusedPreKeyCount(userId: string): Promise<number> {
-		this.logger.debug(`Counting unused prekeys for user ${userId}`);
+	async getUnusedPreKeyCount(userId: string, deviceId: string): Promise<number> {
+		this.logger.debug(`Counting unused prekeys for user ${userId}, device ${deviceId}`);
 
 		try {
-			return await this.preKeyRepository.countUnusedByUserId(userId);
+			return await this.preKeyRepository.countUnusedByUserIdAndDeviceId(userId, deviceId);
 		} catch (error) {
 			this.logger.error(
 				`Failed to count unused prekeys for user ${userId}`,
@@ -203,12 +213,33 @@ export class SignalKeyStorageService {
 	}
 
 	/**
-	 * Delete all keys for a user (for account deletion or device removal)
+	 * Delete all keys for a specific device
+	 * 
+	 * @param userId - The user's unique identifier
+	 * @param deviceId - The device's unique identifier
+	 */
+	async deleteAllKeysForDevice(userId: string, deviceId: string): Promise<void> {
+		this.logger.log(`Deleting all keys for user ${userId}, device ${deviceId}`);
+
+		try {
+			await Promise.all([
+				this.identityKeyRepository.deleteByUserIdAndDeviceId(userId, deviceId),
+				this.signedPreKeyRepository.deleteByUserIdAndDeviceId(userId, deviceId),
+				this.preKeyRepository.deleteByUserIdAndDeviceId(userId, deviceId),
+			]);
+		} catch (error) {
+			this.logger.error(`Failed to delete keys for device ${deviceId}`, error.stack);
+			throw error;
+		}
+	}
+
+	/**
+	 * Delete all keys for a user across all devices (for account deletion)
 	 * 
 	 * @param userId - The user's unique identifier
 	 */
 	async deleteAllKeysForUser(userId: string): Promise<void> {
-		this.logger.log(`Deleting all keys for user ${userId}`);
+		this.logger.log(`Deleting all keys for user ${userId} (all devices)`);
 
 		try {
 			await Promise.all([

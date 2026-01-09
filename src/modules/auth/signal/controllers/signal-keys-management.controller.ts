@@ -1,34 +1,17 @@
+import { Controller, Post, Get, Delete, Body, Param, Req, UseGuards, HttpCode, HttpStatus, Logger, } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth, ApiBody, } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../tokens/guards';
+import { SignalKeyRotationService, SignalKeyValidationService, SignalKeyStorageService, } from '../services';
+import { DevicesService } from '../../devices/services';
+import { SignedPreKeyDto, UploadPreKeysDto, RotationRecommendationsDto, SignedPreKeyUploadResponseDto, PreKeysUploadResponseDto, } from '../dto';
 import {
-	Controller,
-	Post,
-	Get,
-	Delete,
-	Body,
-	Param,
-	UseGuards,
-	Req,
-	HttpCode,
-	HttpStatus,
-	Logger,
-} from '@nestjs/common';
-import {
-	ApiTags,
-	ApiOperation,
-	ApiResponse,
-	ApiParam,
-	ApiBearerAuth,
-	ApiBody,
-} from '@nestjs/swagger';
-import {
-	SignalKeyRotationService,
-	SignalKeyValidationService,
-	SignalKeyStorageService,
-} from '../services';
-import {
-	SignedPreKeyDto,
-	UploadPreKeysDto,
-	RotationRecommendationsDto,
-} from '../dto';
+	SIGNED_PREKEY_UPLOAD_RESPONSE_SCHEMA,
+	SIGNED_PREKEY_UPLOAD_EXAMPLES,
+	SIGNED_PREKEY_UPLOAD_RESPONSE_EXAMPLES,
+	PREKEYS_UPLOAD_RESPONSE_SCHEMA,
+	PREKEYS_UPLOAD_EXAMPLES,
+	PREKEYS_UPLOAD_RESPONSE_EXAMPLES,
+} from '../swagger/signal-keys-management.schemas';
 
 /**
  * Controller for managing Signal Protocol keys
@@ -37,8 +20,9 @@ import {
  * These endpoints require authentication.
  */
 @ApiTags('Signal Protocol - Key Management')
-@Controller('api/v1/signal/keys')
+@Controller('signal/keys')
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 export class SignalKeysManagementController {
 	private readonly logger = new Logger(SignalKeysManagementController.name);
 
@@ -46,7 +30,8 @@ export class SignalKeysManagementController {
 		private readonly rotationService: SignalKeyRotationService,
 		private readonly validationService: SignalKeyValidationService,
 		private readonly storageService: SignalKeyStorageService,
-	) {}
+		private readonly devicesService: DevicesService,
+	) { }
 
 	/**
 	 * POST /api/v1/signal/keys/signed-prekey
@@ -63,27 +48,22 @@ export class SignalKeysManagementController {
 	@ApiBody({
 		type: SignedPreKeyDto,
 		description: 'The new signed prekey to upload',
+		examples: SIGNED_PREKEY_UPLOAD_EXAMPLES,
 	})
 	@ApiResponse({
 		status: 201,
 		description: 'Signed prekey uploaded successfully',
+		type: SignedPreKeyUploadResponseDto,
+		schema: SIGNED_PREKEY_UPLOAD_RESPONSE_SCHEMA,
+		examples: SIGNED_PREKEY_UPLOAD_RESPONSE_EXAMPLES,
 	})
-	@ApiResponse({
-		status: 400,
-		description: 'Invalid key format or validation failed',
-	})
-	@ApiResponse({
-		status: 401,
-		description: 'Unauthorized',
-	})
-	async uploadSignedPreKey(
-		@Body() signedPreKey: SignedPreKeyDto,
-		@Req() req: any,
-	): Promise<{ message: string }> {
-		// TODO: Extract userId from JWT token in req.user
-		const userId = req.user?.id || 'mock-user-id';
+	@ApiResponse({ status: 400, description: 'Invalid key format or validation failed', })
+	@ApiResponse({ status: 401, description: 'Unauthorized', })
+	async uploadSignedPreKey(@Body() signedPreKey: SignedPreKeyDto, @Req() req: any,): Promise<SignedPreKeyUploadResponseDto> {
+		const userId = req.user.sub;
+		const deviceId = req.user.deviceId;
 
-		this.logger.log(`Upload signed prekey request from user ${userId}`);
+		this.logger.log(`Upload signed prekey request from user ${userId}, device ${deviceId}`);
 
 		// Validate the signed prekey
 		this.validationService.validateSignedPreKey(signedPreKey);
@@ -91,11 +71,12 @@ export class SignalKeysManagementController {
 		// Check uniqueness
 		await this.validationService.validateSignedPreKeyIdUniqueness(
 			userId,
+			deviceId,
 			signedPreKey.keyId,
 		);
 
 		// Rotate the key
-		await this.rotationService.rotateSignedPreKey(userId, signedPreKey);
+		await this.rotationService.rotateSignedPreKey(userId, deviceId, signedPreKey);
 
 		return {
 			message: 'Signed prekey uploaded successfully',
@@ -117,10 +98,14 @@ export class SignalKeysManagementController {
 	@ApiBody({
 		type: UploadPreKeysDto,
 		description: 'Array of prekeys to upload',
+		examples: PREKEYS_UPLOAD_EXAMPLES,
 	})
 	@ApiResponse({
 		status: 201,
 		description: 'PreKeys uploaded successfully',
+		type: PreKeysUploadResponseDto,
+		schema: PREKEYS_UPLOAD_RESPONSE_SCHEMA,
+		examples: PREKEYS_UPLOAD_RESPONSE_EXAMPLES,
 	})
 	@ApiResponse({
 		status: 400,
@@ -133,18 +118,19 @@ export class SignalKeysManagementController {
 	async uploadPreKeys(
 		@Body() uploadDto: UploadPreKeysDto,
 		@Req() req: any,
-	): Promise<{ message: string; uploaded: number }> {
-		const userId = req.user?.id || 'mock-user-id';
+	): Promise<PreKeysUploadResponseDto> {
+		const userId = req.user.sub;
+		const deviceId = req.user.deviceId;
 
 		this.logger.log(
-			`Upload ${uploadDto.preKeys.length} prekeys request from user ${userId}`,
+			`Upload ${uploadDto.preKeys.length} prekeys request from user ${userId}, device ${deviceId}`,
 		);
 
 		// Validate all prekeys
 		this.validationService.validatePreKeys(uploadDto.preKeys);
 
 		// Replenish the keys
-		await this.rotationService.replenishPreKeys(userId, uploadDto.preKeys);
+		await this.rotationService.replenishPreKeys(userId, deviceId, uploadDto.preKeys);
 
 		return {
 			message: 'PreKeys uploaded successfully',
@@ -176,11 +162,12 @@ export class SignalKeysManagementController {
 	async getRotationRecommendations(
 		@Req() req: any,
 	): Promise<RotationRecommendationsDto> {
-		const userId = req.user?.id || 'mock-user-id';
+		const userId = req.user.sub;
+		const deviceId = req.user.deviceId;
 
-		this.logger.log(`Get rotation recommendations for user ${userId}`);
+		this.logger.log(`Get rotation recommendations for user ${userId}, device ${deviceId}`);
 
-		return await this.rotationService.getRotationRecommendations(userId);
+		return await this.rotationService.getRotationRecommendations(userId, deviceId);
 	}
 
 	/**
@@ -212,19 +199,16 @@ export class SignalKeysManagementController {
 		status: 403,
 		description: 'Forbidden - not your device',
 	})
-	async deleteDeviceKeys(
-		@Param('deviceId') deviceId: string,
-		@Req() req: any,
-	): Promise<void> {
-		const userId = req.user?.id || 'mock-user-id';
+	async deleteDeviceKeys(@Param('deviceId') deviceId: string, @Req() req: any): Promise<void> {
+		const userId = req.user.sub;
 
 		this.logger.log(`Delete keys for device ${deviceId} by user ${userId}`);
 
-		// TODO: Verify the device belongs to the user
-		// For now, we delete all keys for the user
-		// In a multi-device setup, this would be device-specific
+		// Verify the device belongs to the user
+		await this.devicesService.revokeDevice(userId, deviceId);
 
-		await this.storageService.deleteAllKeysForUser(userId);
+		// Delete only the keys for this specific device
+		await this.storageService.deleteAllKeysForDevice(userId, deviceId);
 
 		this.logger.log(`Successfully deleted keys for device ${deviceId}`);
 	}
@@ -250,7 +234,7 @@ export class SignalKeysManagementController {
 		description: 'Unauthorized',
 	})
 	async deleteAllKeys(@Req() req: any): Promise<void> {
-		const userId = req.user?.id || 'mock-user-id';
+		const userId = req.user.sub;
 
 		this.logger.log(`Delete all keys for user ${userId}`);
 

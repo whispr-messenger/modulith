@@ -24,7 +24,7 @@ import { KeyBundleResponseDto, PreKeyStatusDto } from '../dto';
  * to initiate encrypted conversations using the X3DH protocol.
  */
 @ApiTags('Signal Protocol - Key Bundles')
-@Controller('api/v1/signal/keys')
+@Controller('signal/keys')
 export class SignalKeysController {
 	private readonly logger = new Logger(SignalKeysController.name);
 
@@ -35,15 +35,15 @@ export class SignalKeysController {
 	/**
 	 * GET /api/v1/signal/keys/:userId
 	 * 
-	 * Retrieve the complete key bundle for a user.
-	 * This is the primary endpoint for initiating encrypted sessions.
+	 * DEPRECATED: Use /api/v1/signal/keys/:userId/devices/:deviceId instead.
+	 * This endpoint is kept for backward compatibility but requires deviceId.
 	 */
 	@Get(':userId')
 	@HttpCode(HttpStatus.OK)
 	@ApiOperation({
-		summary: 'Get key bundle for a user',
+		summary: '[DEPRECATED] Get key bundle for a user',
 		description:
-			'Retrieves the complete Signal Protocol key bundle (Identity Key, Signed PreKey, and PreKey) needed to initiate an encrypted session with the specified user.',
+			'DEPRECATED: Please use /api/v1/signal/keys/:userId/devices/:deviceId instead. This endpoint returns 400 Bad Request. In a multi-device setup, you must specify which device to get keys for.',
 	})
 	@ApiParam({
 		name: 'userId',
@@ -51,9 +51,8 @@ export class SignalKeysController {
 		example: '123e4567-e89b-12d3-a456-426614174000',
 	})
 	@ApiResponse({
-		status: 200,
-		description: 'Key bundle successfully retrieved',
-		type: KeyBundleResponseDto,
+		status: 400,
+		description: 'Bad Request - deviceId is required',
 	})
 	@ApiResponse({
 		status: 404,
@@ -62,18 +61,11 @@ export class SignalKeysController {
 	async getKeyBundle(
 		@Param('userId') userId: string,
 	): Promise<KeyBundleResponseDto> {
-		this.logger.log(`Request for key bundle: userId=${userId}`);
-
-		try {
-			return await this.prKeyBundleService.getBundleForUser(userId);
-		} catch (error) {
-			if (error instanceof NotFoundException) {
-				this.logger.warn(`Key bundle not found for user ${userId}`);
-				throw error;
-			}
-			this.logger.error(`Failed to get key bundle for user ${userId}`, error.stack);
-			throw error;
-		}
+		this.logger.warn(`Deprecated endpoint called: GET /signal/keys/${userId}`);
+		
+		throw new NotFoundException(
+			'This endpoint is deprecated. Please use /signal/keys/:userId/devices/:deviceId to specify which device keys to retrieve.',
+		);
 	}
 
 	/**
@@ -134,22 +126,27 @@ export class SignalKeysController {
 	}
 
 	/**
-	 * GET /api/v1/signal/keys/:userId/status
+	 * GET /api/v1/signal/keys/:userId/devices/:deviceId/status
 	 * 
-	 * Get the prekey status for a user (for monitoring)
+	 * Get the prekey status for a specific device (for monitoring)
 	 */
-	@Get(':userId/status')
+	@Get(':userId/devices/:deviceId/status')
 	@HttpCode(HttpStatus.OK)
 	@ApiBearerAuth()
 	@ApiOperation({
-		summary: 'Get prekey status for a user',
+		summary: 'Get prekey status for a device',
 		description:
-			'Returns information about the number of available prekeys and whether the user needs to upload more. Used for monitoring and alerting.',
+			'Returns information about the number of available prekeys and whether the device needs to upload more. Used for monitoring and alerting.',
 	})
 	@ApiParam({
 		name: 'userId',
 		description: 'The UUID of the user',
 		example: '123e4567-e89b-12d3-a456-426614174000',
+	})
+	@ApiParam({
+		name: 'deviceId',
+		description: 'The UUID of the device',
+		example: '987fcdeb-51a2-43f7-9c8d-123456789abc',
 	})
 	@ApiResponse({
 		status: 200,
@@ -158,9 +155,10 @@ export class SignalKeysController {
 	})
 	async getPreKeyStatus(
 		@Param('userId') userId: string,
+		@Param('deviceId') deviceId: string,
 	): Promise<PreKeyStatusDto> {
-		this.logger.log(`Request for prekey status: userId=${userId}`);
+		this.logger.log(`Request for prekey status: userId=${userId}, deviceId=${deviceId}`);
 
-		return await this.prKeyBundleService.getPreKeyStatus(userId);
+		return await this.prKeyBundleService.getPreKeyStatus(userId, deviceId);
 	}
 }

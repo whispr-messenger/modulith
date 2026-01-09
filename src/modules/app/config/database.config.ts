@@ -38,12 +38,12 @@ function parseDatabaseUrl(url: string): DatabaseConfig {
  * @param configService - Injected by NestJS from ConfigModule
  * @returns TypeORM configuration using NestJS ConfigService
  */
-export async function typeOrmModuleOptionsFactory(
+export function typeOrmModuleOptionsFactory(
     configService: ConfigService
-): Promise<TypeOrmModuleOptions> {
+): TypeOrmModuleOptions {
     const databaseUrl = configService.get('DB_URL');
-    
-    const databaseConfig = databaseUrl 
+
+    const databaseConfig = databaseUrl
         ? parseDatabaseUrl(databaseUrl)
         : {
             host: configService.get('DB_HOST', 'postgres'),
@@ -71,13 +71,32 @@ export async function typeOrmModuleOptionsFactory(
  * Used by: npm run migration:*
  * Export named as AppDataSource for TypeORM CLI compatibility
  */
+const getDatabaseConfigForCLI = () => {
+    const databaseUrl = process.env.DB_URL;
+
+    if (databaseUrl) {
+        const parsed = parseDatabaseUrl(databaseUrl);
+        return {
+            host: parsed.host,
+            port: parsed.port,
+            username: parsed.username,
+            password: parsed.password,
+            database: parsed.database,
+        };
+    }
+
+    return {
+        host: process.env.DB_HOST || 'postgres',
+        port: Number.parseInt(process.env.DB_PORT || String(DEFAULT_POSTGRES_PORT), 10),
+        username: process.env.DB_USERNAME || 'postgres',
+        password: process.env.DB_PASSWORD || 'password',
+        database: process.env.DB_NAME || 'whispr',
+    };
+};
+
 export const AppDataSource = new DataSource({
     type: 'postgres',
-    host: process.env.DB_HOST || 'postgres',
-    port: Number.parseInt(process.env.DB_PORT || String(DEFAULT_POSTGRES_PORT), 10),
-    username: process.env.DB_USERNAME || 'postgres',
-    password: process.env.DB_PASSWORD || 'password',
-    database: process.env.DB_NAME || 'whispr',
+    ...getDatabaseConfigForCLI(),
     entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
     migrations: [__dirname + '/../../../migrations/*{.ts,.js}'],
     synchronize: false,

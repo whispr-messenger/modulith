@@ -17,10 +17,7 @@ export class PhoneAuthenticationController {
 	@ApiResponse({ status: 201, description: 'User successfully registered' })
 	@ApiResponse({ status: 400, description: 'Invalid registration data' })
 	@ApiResponse({ status: 409, description: 'User already exists' })
-	@ApiBody({
-		type: RegisterDto,
-		examples: REGISTER_EXAMPLES,
-	})
+	@ApiBody({ type: RegisterDto, examples: REGISTER_EXAMPLES, })
 	async register(@Body() dto: RegisterDto, @Request() req: any) {
 		const fingerprint: DeviceFingerprint = {
 			userAgent: req.headers['user-agent'],

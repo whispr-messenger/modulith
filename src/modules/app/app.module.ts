@@ -28,7 +28,6 @@ const typeOrmModuleAsyncOptions: TypeOrmModuleAsyncOptions = {
 	inject: [ConfigService],
 };
 
-
 @Module({
   imports: [
     ConfigModule.forRoot(configModuleOptions),

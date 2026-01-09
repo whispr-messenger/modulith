@@ -151,36 +151,40 @@ export class SignalKeyValidationService {
 	}
 
 	/**
-	 * Check if a signed prekey keyId is unique for a user
+	 * Check if a signed prekey keyId is unique for a device
 	 * 
 	 * @param userId - The user's ID
+	 * @param deviceId - The device's ID
 	 * @param keyId - The keyId to check
 	 * @returns true if the keyId is unique
 	 */
-	async isSignedPreKeyIdUnique(userId: string, keyId: number): Promise<boolean> {
-		const existing = await this.signedPreKeyRepository.findByUserIdAndKeyId(
+	async isSignedPreKeyIdUnique(userId: string, deviceId: string, keyId: number): Promise<boolean> {
+		const existing = await this.signedPreKeyRepository.findByUserIdDeviceIdAndKeyId(
 			userId,
+			deviceId,
 			keyId,
 		);
 		return !existing;
 	}
 
 	/**
-	 * Validate that a signed prekey keyId is unique for a user
+	 * Validate that a signed prekey keyId is unique for a device
 	 * 
 	 * @param userId - The user's ID
+	 * @param deviceId - The device's ID
 	 * @param keyId - The keyId to check
 	 * @throws BadRequestException if keyId is not unique
 	 */
 	async validateSignedPreKeyIdUniqueness(
 		userId: string,
+		deviceId: string,
 		keyId: number,
 	): Promise<void> {
-		const isUnique = await this.isSignedPreKeyIdUnique(userId, keyId);
+		const isUnique = await this.isSignedPreKeyIdUnique(userId, deviceId, keyId);
 
 		if (!isUnique) {
 			throw new BadRequestException(
-				`Signed prekey with keyId ${keyId} already exists for this user`,
+				`Signed prekey with keyId ${keyId} already exists for this device`,
 			);
 		}
 	}

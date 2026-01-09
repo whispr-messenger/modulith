@@ -3,6 +3,13 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SignalKeySchedulerService } from '../services/signal-key-scheduler.service';
 import { SignalKeyRotationService } from '../services/signal-key-rotation.service';
 import { PreKeyRepository } from '../repositories';
+import {
+	SIGNAL_HEALTH_STATUS_SCHEMA,
+	SIGNAL_HEALTH_STATUS_EXAMPLES,
+	CLEANUP_RESULT_SCHEMA,
+	CLEANUP_RESULT_EXAMPLES,
+} from '../swagger/signal-keys-health.schemas';
+import { SignalHealthStatusDto, CleanupResultDto } from '../dto';
 
 /**
  * Health check and monitoring endpoint for Signal Protocol keys
@@ -13,15 +20,14 @@ import { PreKeyRepository } from '../repositories';
  * - Key rotation status
  */
 @ApiTags('Signal Protocol - Health & Monitoring')
-@Controller('api/v1/signal/health')
+@Controller('signal/health')
 export class SignalKeysHealthController {
 	private readonly logger = new Logger(SignalKeysHealthController.name);
 
 	constructor(
 		private readonly schedulerService: SignalKeySchedulerService,
-		private readonly rotationService: SignalKeyRotationService,
 		private readonly preKeyRepository: PreKeyRepository,
-	) {}
+	) { }
 
 	/**
 	 * GET /api/v1/signal/health
@@ -38,67 +44,11 @@ export class SignalKeysHealthController {
 	@ApiResponse({
 		status: 200,
 		description: 'Health status retrieved successfully',
-		schema: {
-			type: 'object',
-			properties: {
-				status: {
-					type: 'string',
-					enum: ['healthy', 'degraded', 'unhealthy'],
-					example: 'healthy',
-				},
-				timestamp: {
-					type: 'string',
-					format: 'date-time',
-					example: '2026-01-08T14:30:00Z',
-				},
-				scheduler: {
-					type: 'object',
-					properties: {
-						isHealthy: { type: 'boolean', example: true },
-						lastCleanupTime: {
-							type: 'string',
-							format: 'date-time',
-							nullable: true,
-						},
-						lastPreKeyCheckTime: {
-							type: 'string',
-							format: 'date-time',
-							nullable: true,
-						},
-						lastOldPreKeyCleanupTime: {
-							type: 'string',
-							format: 'date-time',
-							nullable: true,
-						},
-					},
-				},
-				prekeys: {
-					type: 'object',
-					properties: {
-						totalUnused: { type: 'number', example: 5420 },
-						usersWithLowPrekeys: { type: 'number', example: 2 },
-						usersWithNoPrekeys: { type: 'number', example: 0 },
-					},
-				},
-				issues: {
-					type: 'array',
-					items: { type: 'string' },
-					example: [],
-				},
-			},
-		},
+		type: SignalHealthStatusDto,
+		schema: SIGNAL_HEALTH_STATUS_SCHEMA,
+		examples: SIGNAL_HEALTH_STATUS_EXAMPLES,
 	})
-	async getHealth(): Promise<{
-		status: 'healthy' | 'degraded' | 'unhealthy';
-		timestamp: Date;
-		scheduler: ReturnType<SignalKeySchedulerService['getSchedulerStats']>;
-		prekeys: {
-			totalUnused: number;
-			usersWithLowPrekeys: number;
-			usersWithNoPrekeys: number;
-		};
-		issues: string[];
-	}> {
+	async getHealth(): Promise<SignalHealthStatusDto> {
 		this.logger.debug('Health check requested');
 
 		const schedulerStats = this.schedulerService.getSchedulerStats();
@@ -108,20 +58,22 @@ export class SignalKeysHealthController {
 			where: { isUsed: false },
 		});
 
-		const usersGrouped = await this.preKeyRepository
+		const devicesGrouped = await this.preKeyRepository
 			.createQueryBuilder('prekey')
 			.select('prekey.userId', 'userId')
+			.addSelect('prekey.deviceId', 'deviceId')
 			.addSelect('COUNT(*)', 'count')
 			.where('prekey.isUsed = false')
 			.groupBy('prekey.userId')
+			.addGroupBy('prekey.deviceId')
 			.getRawMany();
 
-		const usersWithLowPrekeys = usersGrouped.filter(
-			(u) => parseInt(u.count, 10) < 20,
+		const devicesWithLowPrekeys = devicesGrouped.filter(
+			(d) => parseInt(d.count, 10) < 20,
 		).length;
 
-		const usersWithNoPrekeys = usersGrouped.filter(
-			(u) => parseInt(u.count, 10) === 0,
+		const devicesWithNoPrekeys = devicesGrouped.filter(
+			(d) => parseInt(d.count, 10) === 0,
 		).length;
 
 		// Determine overall health status
@@ -131,15 +83,15 @@ export class SignalKeysHealthController {
 			issues.push('Scheduler jobs not running as expected');
 		}
 
-		if (usersWithNoPrekeys > 0) {
+		if (devicesWithNoPrekeys > 0) {
 			issues.push(
-				`${usersWithNoPrekeys} users have no available prekeys (cannot initiate conversations)`,
+				`${devicesWithNoPrekeys} devices have no available prekeys (cannot initiate conversations)`,
 			);
 		}
 
-		if (usersWithLowPrekeys > 10) {
+		if (devicesWithLowPrekeys > 10) {
 			issues.push(
-				`${usersWithLowPrekeys} users have low prekey counts (< 20)`,
+				`${devicesWithLowPrekeys} devices have low prekey counts (< 20)`,
 			);
 		}
 
@@ -150,7 +102,7 @@ export class SignalKeysHealthController {
 		}
 
 		let status: 'healthy' | 'degraded' | 'unhealthy';
-		if (usersWithNoPrekeys > 0 || !schedulerStats.isHealthy) {
+		if (devicesWithNoPrekeys > 0 || !schedulerStats.isHealthy) {
 			status = 'unhealthy';
 		} else if (issues.length > 0) {
 			status = 'degraded';
@@ -166,8 +118,8 @@ export class SignalKeysHealthController {
 			scheduler: schedulerStats,
 			prekeys: {
 				totalUnused,
-				usersWithLowPrekeys,
-				usersWithNoPrekeys,
+				devicesWithLowPrekeys,
+				devicesWithNoPrekeys,
 			},
 			issues,
 		};
@@ -188,20 +140,11 @@ export class SignalKeysHealthController {
 	@ApiResponse({
 		status: 200,
 		description: 'Cleanup completed successfully',
-		schema: {
-			type: 'object',
-			properties: {
-				message: { type: 'string', example: 'Cleanup completed successfully' },
-				expiredKeysDeleted: { type: 'number', example: 5 },
-				oldPreKeysDeleted: { type: 'number', example: 23 },
-			},
-		},
+		type: CleanupResultDto,
+		schema: CLEANUP_RESULT_SCHEMA,
+		examples: CLEANUP_RESULT_EXAMPLES,
 	})
-	async triggerManualCleanup(): Promise<{
-		message: string;
-		expiredKeysDeleted: number;
-		oldPreKeysDeleted: number;
-	}> {
+	async triggerManualCleanup(): Promise<CleanupResultDto> {
 		this.logger.log('Manual cleanup triggered via API');
 
 		const result = await this.schedulerService.manualCleanup();

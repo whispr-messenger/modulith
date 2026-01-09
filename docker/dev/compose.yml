@@ -20,8 +20,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    expose:
-      - ${POSTGRES_PORT}
+    ports:
+      - "${POSTGRES_PORT}:5432"
     networks:
       - whispr-network
     healthcheck:
@@ -37,8 +37,8 @@ services:
       - redis_data:/data
       - ./redis.conf:/usr/local/etc/redis/redis.conf
     command: redis-server /usr/local/etc/redis/redis.conf
-    expose:
-      - ${REDIS_PORT}
+    ports:
+      - "${REDIS_PORT}:6379"
     networks:
       - whispr-network
     healthcheck:

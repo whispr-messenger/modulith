@@ -9,22 +9,23 @@ export class SignedPreKeyRepository extends Repository<SignedPreKey> {
 	}
 
 	/**
-	 * Find all signed prekeys for a user
+	 * Find all signed prekeys for a user and device
 	 */
-	async findByUserId(userId: string): Promise<SignedPreKey[]> {
+	async findByUserIdAndDeviceId(userId: string, deviceId: string): Promise<SignedPreKey[]> {
 		return this.find({
-			where: { userId },
+			where: { userId, deviceId },
 			order: { createdAt: 'DESC' },
 		});
 	}
 
 	/**
-	 * Find the most recent active (non-expired) signed prekey for a user
+	 * Find the most recent active (non-expired) signed prekey for a user and device
 	 */
-	async findActiveByUserId(userId: string): Promise<SignedPreKey | null> {
+	async findActiveByUserIdAndDeviceId(userId: string, deviceId: string): Promise<SignedPreKey | null> {
 		return this.findOne({
 			where: {
 				userId,
+				deviceId,
 				expiresAt: MoreThan(new Date()),
 			},
 			order: { createdAt: 'DESC' },
@@ -32,11 +33,11 @@ export class SignedPreKeyRepository extends Repository<SignedPreKey> {
 	}
 
 	/**
-	 * Find a specific signed prekey by user and key ID
+	 * Find a specific signed prekey by user, device and key ID
 	 */
-	async findByUserIdAndKeyId(userId: string, keyId: number): Promise<SignedPreKey | null> {
+	async findByUserIdDeviceIdAndKeyId(userId: string, deviceId: string, keyId: number): Promise<SignedPreKey | null> {
 		return this.findOne({
-			where: { userId, keyId },
+			where: { userId, deviceId, keyId },
 		});
 	}
 
@@ -45,6 +46,7 @@ export class SignedPreKeyRepository extends Repository<SignedPreKey> {
 	 */
 	async createSignedPreKey(
 		userId: string,
+		deviceId: string,
 		keyId: number,
 		publicKey: string,
 		signature: string,
@@ -52,6 +54,7 @@ export class SignedPreKeyRepository extends Repository<SignedPreKey> {
 	): Promise<SignedPreKey> {
 		const signedPreKey = this.create({
 			userId,
+			deviceId,
 			keyId,
 			publicKey,
 			signature,
@@ -73,17 +76,25 @@ export class SignedPreKeyRepository extends Repository<SignedPreKey> {
 	}
 
 	/**
-	 * Delete expired signed prekeys for a specific user
+	 * Delete expired signed prekeys for a specific user and device
 	 */
-	async deleteExpiredByUserId(userId: string): Promise<void> {
+	async deleteExpiredByUserIdAndDeviceId(userId: string, deviceId: string): Promise<void> {
 		await this.delete({
 			userId,
+			deviceId,
 			expiresAt: LessThan(new Date()),
 		});
 	}
 
 	/**
-	 * Delete all signed prekeys for a user
+	 * Delete all signed prekeys for a user and device
+	 */
+	async deleteByUserIdAndDeviceId(userId: string, deviceId: string): Promise<void> {
+		await this.delete({ userId, deviceId });
+	}
+
+	/**
+	 * Delete all signed prekeys for a user (all devices)
 	 */
 	async deleteByUserId(userId: string): Promise<void> {
 		await this.delete({ userId });
