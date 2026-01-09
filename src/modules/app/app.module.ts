@@ -72,9 +72,9 @@ const typeOrmModuleAsyncOptions: TypeOrmModuleAsyncOptions = {
     // AuthModule,
 
     // Scheduling modules
-    SchedulerModule,
-    QueueModule,
-    MonitoringModule,
+    // SchedulerModule,
+    // QueueModule,
+    // MonitoringModule,
 
     // Messaging module
     MessagingModule,
