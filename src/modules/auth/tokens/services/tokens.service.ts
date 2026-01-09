@@ -28,8 +28,6 @@ export class TokensService {
 
 		const accessTokenPayload: JwtPayload = {
 			sub: userId,
-			iat: Math.floor(Date.now() / 1000),
-			exp: Math.floor(Date.now() / 1000) + this.ACCESS_TOKEN_TTL,
 			deviceId,
 			scope: 'user',
 			fingerprint: deviceFingerprint,
@@ -40,8 +38,6 @@ export class TokensService {
 			deviceId,
 			tokenId: refreshTokenId,
 			type: 'refresh',
-			iat: Math.floor(Date.now() / 1000),
-			exp: Math.floor(Date.now() / 1000) + this.REFRESH_TOKEN_TTL,
 		};
 
 		const accessToken = this.jwtService.sign(accessTokenPayload, {
@@ -138,7 +134,7 @@ export class TokensService {
 	}
 
 	private generateDeviceFingerprint(fingerprint: DeviceFingerprint): string {
-		const data = `${fingerprint.userAgent || ''}:${fingerprint.ipAddress || ''}:${fingerprint.deviceType || ''}:${fingerprint.timestamp}`;
+		const data = `${fingerprint.userAgent || ''}:${fingerprint.ipAddress || ''}:${fingerprint.deviceType || ''}`;
 		return crypto.createHash('sha256').update(data).digest('hex').substring(0, 12);
 	}
 }

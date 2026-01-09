@@ -6,7 +6,7 @@ import { RefreshTokenDto } from '../dto/refresh-token.dto';
 
 @Controller('tokens')
 export class TokensController {
-	constructor(private readonly tokensService: TokensService) {}
+	constructor(private readonly tokensService: TokensService) { }
 
 	@Post('refresh')
 	@HttpCode(HttpStatus.OK)
@@ -20,7 +20,7 @@ export class TokensController {
 		const fingerprint: DeviceFingerprint = {
 			userAgent: req.headers['user-agent'],
 			ipAddress: req.ip,
-			deviceType: 'unknown',
+			deviceType: dto.deviceType || 'unknown',
 			timestamp: Date.now(),
 		};
 

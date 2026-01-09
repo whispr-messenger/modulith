@@ -8,6 +8,7 @@ import { BaseAuthenticationController } from './controllers/base-authentication.
 import { BaseAuthenticationService, NotificationService } from './services';
 import { BackupCodesService } from '../two-factor-authentication/backup-codes/backup-codes.service';
 import { UserAuth } from '../common/entities/user-auth.entity';
+import { BackupCode } from './entities/backup-code.entity';
 
 import { JwtAuthGuard } from './guards';
 import { jwtModuleOptionsFactory } from './config/jwt.config';
@@ -15,6 +16,7 @@ import { jwtModuleOptionsFactory } from './config/jwt.config';
 import { TokensModule } from '../tokens/tokens.module';
 import { DevicesModule } from '../devices/devices.module';
 import { PhoneVerificationModule } from '../phone-verification/phone-verification.module';
+import { CommonModule } from '../common/common.module';
 
 const jwtModuleAsyncOptions: JwtModuleAsyncOptions = {
 	imports: [ConfigModule],
@@ -43,6 +45,7 @@ const throttlerModuleOptions: ThrottlerModuleOptions = [
 	imports: [
 		TypeOrmModule.forFeature([
 			UserAuth,
+			BackupCode,
 		]),
 		JwtModule.registerAsync(jwtModuleAsyncOptions),
 		CacheModule.register(cacheConfig),
@@ -50,6 +53,7 @@ const throttlerModuleOptions: ThrottlerModuleOptions = [
 		TokensModule,
 		DevicesModule,
 		PhoneVerificationModule,
+		CommonModule,
 	],
 	// The subset of providers that are provided by this module and should be available in other modules
 	// which import this module.

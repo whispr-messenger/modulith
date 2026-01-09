@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThanOrEqual } from 'typeorm';
 import { Device } from '../entities/device.entity';
 import { DeviceRegistrationData } from '../types/device-registration-data.interface';
 
@@ -29,6 +29,12 @@ export class DevicesService {
 			return this.deviceRepository.save(existingDevice);
 		}
 
+		// Generate a deterministic fingerprint based on device identity
+		const fingerprintString = `${data.userId}:${data.deviceName}:${data.deviceType}`;
+		// simple hash implementation using node crypto or just a unique string if crypto is not wanted
+		// Since we are in NestJS, we can use built-in crypto
+		const deviceFingerprint = require('crypto').createHash('sha256').update(fingerprintString).digest('hex');
+
 		const device = this.deviceRepository.create({
 			userId: data.userId,
 			deviceName: data.deviceName,
@@ -36,6 +42,7 @@ export class DevicesService {
 			publicKey: data.publicKey,
 			ipAddress: data.ipAddress,
 			fcmToken: data.fcmToken,
+			deviceFingerprint: deviceFingerprint,
 			isVerified: true,
 			lastActive: new Date(),
 		});
@@ -103,7 +110,7 @@ export class DevicesService {
 			where: {
 				userId,
 				isVerified: true,
-				lastActive: { $gte: thirtyDaysAgo } as any,
+				lastActive: MoreThanOrEqual(thirtyDaysAgo),
 			},
 		});
 

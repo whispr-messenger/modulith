@@ -65,7 +65,6 @@ export class Device {
 
 	@Column({
 		name: 'last_active',
-		type: 'timestamp',
 		default: () => 'CURRENT_TIMESTAMP',
 	})
 	lastActive: Date;

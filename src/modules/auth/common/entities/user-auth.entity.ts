@@ -21,7 +21,6 @@ export class UserAuth {
 
 	@Column({
 		name: 'last_authenticated_at',
-		type: 'timestamp',
 		nullable: true,
 	})
 	lastAuthenticatedAt: Date;

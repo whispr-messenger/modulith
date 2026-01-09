@@ -10,4 +10,14 @@ export class RefreshTokenDto {
 	@IsNotEmpty()
 	@IsString()
 	refreshToken: string;
+
+	@ApiProperty({
+		description: 'Device type (ios, android, web)',
+		example: 'ios',
+		required: false,
+		type: String,
+	})
+	@IsString()
+	@IsNotEmpty() // Wait, optional? Use IsOptional
+	deviceType?: string;
 }

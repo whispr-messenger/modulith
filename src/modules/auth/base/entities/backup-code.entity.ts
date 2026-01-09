@@ -27,7 +27,7 @@ export class BackupCode {
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 
-    @Column({ name: 'used_at', type: 'timestamp', nullable: true })
+    @Column({ name: 'used_at', nullable: true })
     usedAt: Date;
 
     @ManyToOne(() => UserAuth, { onDelete: 'CASCADE' })
