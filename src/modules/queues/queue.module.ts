@@ -16,7 +16,7 @@ import { NotificationJobHandler } from './handlers/notification-job.handler';
 import { WebhookJobHandler } from './handlers/webhook-job.handler';
 
 // Entities
-import { JobExecution } from '../scheduler/entities/job-execution.entity';
+import { JobExecution } from '../scheduling/entities/job-execution.entity';
 
 @Module({
   imports: [

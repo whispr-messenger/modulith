@@ -3,9 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike, In } from 'typeorm';
 import { OnEvent } from '@nestjs/event-emitter';
 import * as crypto from 'crypto';
-import { UserCreatedEvent } from '../users/events/user-created.event';
-import { User, PrivacySettings, UserSearchIndex } from '../users/entities';
-import { SearchIndexService } from '../users/cache';
+import { UserCreatedEvent } from '../events/user-created.event';
+import { User, PrivacySettings, UserSearchIndex } from '../entities';
+import { SearchIndexService } from '../cache';
 import { PrivacyService } from '../privacy/privacy.service';
 
 export interface UserSearchResult {

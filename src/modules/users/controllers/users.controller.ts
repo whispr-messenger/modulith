@@ -20,8 +20,8 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { CreateUserDto, UpdateUserDto } from '../../dto';
-import { User } from '../../entities';
+import { CreateUserDto, UpdateUserDto } from '../dto';
+import { User } from '../entities';
 
 @ApiTags('users')
 @ApiBearerAuth()

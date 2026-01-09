@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CacheService } from './cache.service';
-import { User } from '../../entities';
+import { User } from '../entities';
 
 export interface SearchIndexEntry {
   userId: string;

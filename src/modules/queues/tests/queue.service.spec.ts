@@ -2,7 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { QueueService } from '../queue.service';
 import { JobPriority } from '../enums';
-import { JobType } from '../../scheduler/enums';
+import { JobType } from '../../scheduling/enums';
 
 // Simple mock pour éviter les problèmes de @nestjs/bull
 const createMockQueue = () => ({

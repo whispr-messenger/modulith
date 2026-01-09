@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Job } from 'bullmq';
-import { JobExecution } from '../../scheduler/entities/job-execution.entity';
+import { JobExecution } from '../../scheduling/entities/job-execution.entity';
 import { JobProcessor, JobData } from './job.processor';
 import { EmailJobHandler } from '../handlers/email-job.handler';
 import { NotificationJobHandler } from '../handlers/notification-job.handler';

@@ -13,8 +13,8 @@ import {
   PrivacySettings,
   PrivacyLevel,
   UserSearchIndex,
-} from '../users/entities';
-import { SearchIndexService } from '../users/cache';
+} from '../entities';
+import { SearchIndexService } from '../cache';
 import { PrivacyService } from '../privacy/privacy.service';
 
 describe('UserSearchService', () => {
