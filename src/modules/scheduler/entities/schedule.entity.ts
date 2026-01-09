@@ -9,9 +9,9 @@ import {
   Index,
 } from 'typeorm';
 import { ScheduleStatus } from '../enums';
-import type { Job } from './job.entity';
+import { Job } from './job.entity';
 
-@Entity('schedules')
+@Entity({ name: 'schedules', schema: 'scheduling' })
 @Index(['isActive', 'nextExecution'])
 @Index(['cronExpression'])
 export class Schedule {
@@ -67,7 +67,7 @@ export class Schedule {
   updatedAt: Date;
 
   // Relations
-  @OneToOne('Job', (job) => job.schedule, { onDelete: 'CASCADE' })
+  @OneToOne(() => Job, (job: Job) => job.schedule, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'job_id' })
   job: Job;
 

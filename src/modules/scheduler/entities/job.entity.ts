@@ -9,10 +9,10 @@ import {
   Index,
 } from 'typeorm';
 import { JobStatus, JobType } from '../enums';
-import type { Schedule } from './schedule.entity';
+import { Schedule } from './schedule.entity';
 import { JobExecution } from './job-execution.entity';
 
-@Entity('jobs')
+@Entity({ name: 'jobs', schema: 'scheduling' })
 @Index(['status', 'type'])
 @Index(['createdAt'])
 @Index(['priority', 'status'])
@@ -77,10 +77,10 @@ export class Job {
   updatedAt: Date;
 
   // Relations
-  @OneToOne('Schedule', (schedule) => schedule.job, { cascade: true })
+  @OneToOne(() => Schedule, (schedule: Schedule) => schedule.job, { cascade: true })
   schedule: Schedule;
 
-  @OneToMany('JobExecution', (execution) => execution.job, { cascade: true })
+  @OneToMany(() => JobExecution, (execution: JobExecution) => execution.job, { cascade: true })
   executions: JobExecution[];
 
   // Helper methods
