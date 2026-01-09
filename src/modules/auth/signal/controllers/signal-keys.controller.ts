@@ -28,45 +28,8 @@ import { KeyBundleResponseDto, PreKeyStatusDto } from '../dto';
 export class SignalKeysController {
 	private readonly logger = new Logger(SignalKeysController.name);
 
-	constructor(
-		private readonly prKeyBundleService: SignalPreKeyBundleService,
-	) {}
+	constructor(private readonly prKeyBundleService: SignalPreKeyBundleService) { }
 
-	/**
-	 * GET /api/v1/signal/keys/:userId
-	 * 
-	 * DEPRECATED: Use /api/v1/signal/keys/:userId/devices/:deviceId instead.
-	 * This endpoint is kept for backward compatibility but requires deviceId.
-	 */
-	@Get(':userId')
-	@HttpCode(HttpStatus.OK)
-	@ApiOperation({
-		summary: '[DEPRECATED] Get key bundle for a user',
-		description:
-			'DEPRECATED: Please use /api/v1/signal/keys/:userId/devices/:deviceId instead. This endpoint returns 400 Bad Request. In a multi-device setup, you must specify which device to get keys for.',
-	})
-	@ApiParam({
-		name: 'userId',
-		description: 'The UUID of the user whose keys to retrieve',
-		example: '123e4567-e89b-12d3-a456-426614174000',
-	})
-	@ApiResponse({
-		status: 400,
-		description: 'Bad Request - deviceId is required',
-	})
-	@ApiResponse({
-		status: 404,
-		description: 'User not found or has no registered keys',
-	})
-	async getKeyBundle(
-		@Param('userId') userId: string,
-	): Promise<KeyBundleResponseDto> {
-		this.logger.warn(`Deprecated endpoint called: GET /signal/keys/${userId}`);
-		
-		throw new NotFoundException(
-			'This endpoint is deprecated. Please use /signal/keys/:userId/devices/:deviceId to specify which device keys to retrieve.',
-		);
-	}
 
 	/**
 	 * GET /api/v1/signal/keys/:userId/devices/:deviceId
@@ -96,10 +59,7 @@ export class SignalKeysController {
 		description: 'Device key bundle successfully retrieved',
 		type: KeyBundleResponseDto,
 	})
-	@ApiResponse({
-		status: 404,
-		description: 'User or device not found',
-	})
+	@ApiResponse({ status: 404, description: 'User or device not found' })
 	async getKeyBundleForDevice(
 		@Param('userId') userId: string,
 		@Param('deviceId') deviceId: string,
