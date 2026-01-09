@@ -4,11 +4,7 @@ import { ConversationsService } from './conversations.service';
 import type { CreateConversationDto } from './conversations.service';
 import { ConversationType } from '../entities';
 import { ConversationResponseDto, ConversationMemberDto, SuccessResponseDto, AddMemberDto, UpdateMemberSettingsDto, } from './dto';
-import {
-    CREATE_CONVERSATION_EXAMPLES,
-    ADD_MEMBER_EXAMPLES,
-    UPDATE_MEMBER_SETTINGS_EXAMPLES,
-} from './swagger/conversations.examples';
+import { CREATE_CONVERSATION_EXAMPLES, ADD_MEMBER_EXAMPLES, UPDATE_MEMBER_SETTINGS_EXAMPLES } from './swagger/conversations.examples';
 
 @ApiTags('Conversations')
 @ApiBearerAuth()
