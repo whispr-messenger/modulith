@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nes
 import { PhoneAuthenticationService } from '../services/phone-authentication.service';
 import { JwtAuthGuard } from '../../tokens/guards';
 import { DeviceFingerprint } from '../../devices/types/device-fingerprint.interface';
-import { RegisterDto, LoginDto, LogoutDto } from '../dto';
+import { RegisterDto, LoginDto, LogoutDto, RegisterResponseDto, LoginResponseDto } from '../dto';
 import { REGISTER_EXAMPLES, LOGIN_EXAMPLES, LOGOUT_EXAMPLES } from '../swagger/phone-authentication.examples';
 
 @ApiTags('Authentication')
@@ -14,11 +14,11 @@ export class PhoneAuthenticationController {
 	@Post('register')
 	@HttpCode(HttpStatus.CREATED)
 	@ApiOperation({ summary: 'Register a new user account' })
-	@ApiResponse({ status: 201, description: 'User successfully registered' })
+	@ApiResponse({ status: 201, description: 'User successfully registered', type: RegisterResponseDto })
 	@ApiResponse({ status: 400, description: 'Invalid registration data' })
 	@ApiResponse({ status: 409, description: 'User already exists' })
 	@ApiBody({ type: RegisterDto, examples: REGISTER_EXAMPLES, })
-	async register(@Body() dto: RegisterDto, @Request() req: any) {
+	async register(@Body() dto: RegisterDto, @Request() req: any): Promise<RegisterResponseDto> {
 		const fingerprint: DeviceFingerprint = {
 			userAgent: req.headers['user-agent'],
 			ipAddress: req.ip,
@@ -35,6 +35,7 @@ export class PhoneAuthenticationController {
 	@ApiResponse({
 		status: 200,
 		description: 'Login successful, returns access and refresh tokens',
+		type: LoginResponseDto,
 	})
 	@ApiResponse({ status: 401, description: 'Invalid credentials' })
 	@ApiResponse({ status: 403, description: '2FA verification required' })
@@ -42,7 +43,7 @@ export class PhoneAuthenticationController {
 		type: LoginDto,
 		examples: LOGIN_EXAMPLES,
 	})
-	async login(@Body() dto: LoginDto, @Request() req: any) {
+	async login(@Body() dto: LoginDto, @Request() req: any): Promise<LoginResponseDto> {
 		const fingerprint: DeviceFingerprint = {
 			userAgent: req.headers['user-agent'],
 			ipAddress: req.ip,
