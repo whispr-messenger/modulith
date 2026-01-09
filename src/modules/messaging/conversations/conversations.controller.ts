@@ -1,20 +1,14 @@
-import {
-    Controller,
-    Get,
-    Post,
-    Patch,
-    Delete,
-    Body,
-    Param,
-    Query,
-    UseGuards,
-    Request,
-    HttpStatus,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Request, HttpStatus, } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { ConversationsService } from './conversations.service';
 import type { CreateConversationDto } from './conversations.service';
 import { ConversationType } from '../entities';
+import { ConversationResponseDto, ConversationMemberDto, SuccessResponseDto, AddMemberDto, UpdateMemberSettingsDto, } from './dto';
+import {
+    CREATE_CONVERSATION_EXAMPLES,
+    ADD_MEMBER_EXAMPLES,
+    UPDATE_MEMBER_SETTINGS_EXAMPLES,
+} from './swagger/conversations.examples';
 
 @ApiTags('Conversations')
 @ApiBearerAuth()
@@ -25,23 +19,24 @@ export class ConversationsController {
 
     @Post()
     @ApiOperation({ summary: 'Create a new conversation' })
-    @ApiResponse({ status: HttpStatus.CREATED, description: 'Conversation created successfully' })
+    @ApiBody({ type: Object, examples: CREATE_CONVERSATION_EXAMPLES })
+    @ApiResponse({ status: HttpStatus.CREATED, description: 'Conversation created successfully', type: ConversationResponseDto })
     async create(
         @Body() dto: CreateConversationDto,
         @Request() req: any,
-    ) {
+    ): Promise<ConversationResponseDto> {
         const userId = req.user?.id || 'test-user-id'; // TODO: Get from JWT
         return this.conversationsService.createConversation(dto, userId);
     }
 
     @Get()
     @ApiOperation({ summary: 'List user conversations' })
-    @ApiResponse({ status: HttpStatus.OK, description: 'List of conversations' })
+    @ApiResponse({ status: HttpStatus.OK, description: 'List of conversations', type: [ConversationResponseDto] })
     async list(
         @Request() req: any,
         @Query('limit') limit?: number,
         @Query('offset') offset?: number,
-    ) {
+    ): Promise<ConversationResponseDto[]> {
         const userId = req.user?.id || 'test-user-id';
         return this.conversationsService.listUserConversations(userId, {
             limit: limit ? parseInt(String(limit)) : 50,
@@ -49,29 +44,30 @@ export class ConversationsController {
         });
     }
 
-    @Get(':id')
+    @Get(':conversationId')
     @ApiOperation({ summary: 'Get conversation by ID' })
-    @ApiResponse({ status: HttpStatus.OK, description: 'Conversation details' })
+    @ApiResponse({ status: HttpStatus.OK, description: 'Conversation details', type: ConversationResponseDto })
     @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Conversation not found' })
-    async findOne(@Param('id') id: string) {
-        return this.conversationsService.findById(id);
+    async findOne(@Param('conversationId') conversationId: string): Promise<ConversationResponseDto> {
+        return this.conversationsService.findById(conversationId);
     }
 
-    @Get(':id/members')
+    @Get(':conversationId/members')
     @ApiOperation({ summary: 'Get conversation members' })
-    @ApiResponse({ status: HttpStatus.OK, description: 'List of members' })
-    async getMembers(@Param('id') id: string) {
-        return this.conversationsService.getMembers(id);
+    @ApiResponse({ status: HttpStatus.OK, description: 'List of members', type: [ConversationMemberDto] })
+    async getMembers(@Param('conversationId') conversationId: string): Promise<ConversationMemberDto[]> {
+        return this.conversationsService.getMembers(conversationId);
     }
 
-    @Post(':id/members')
+    @Post(':conversationId/members')
     @ApiOperation({ summary: 'Add member to conversation' })
-    @ApiResponse({ status: HttpStatus.CREATED, description: 'Member added' })
+    @ApiBody({ type: AddMemberDto, examples: ADD_MEMBER_EXAMPLES })
+    @ApiResponse({ status: HttpStatus.CREATED, description: 'Member added', type: ConversationMemberDto })
     async addMember(
-        @Param('id') conversationId: string,
-        @Body() body: { userId: string; role?: 'admin' | 'member' },
+        @Param('conversationId') conversationId: string,
+        @Body() body: AddMemberDto,
         @Request() req: any,
-    ) {
+    ): Promise<ConversationMemberDto> {
         const addedBy = req.user?.id || 'test-user-id';
         return this.conversationsService.addMember(
             conversationId,
@@ -81,37 +77,38 @@ export class ConversationsController {
         );
     }
 
-    @Delete(':id/members/:userId')
+    @Delete(':conversationId/members/:userId')
     @ApiOperation({ summary: 'Remove member from conversation' })
-    @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Member removed' })
+    @ApiResponse({ status: HttpStatus.OK, description: 'Member removed', type: SuccessResponseDto })
     async removeMember(
-        @Param('id') conversationId: string,
+        @Param('conversationId') conversationId: string,
         @Param('userId') userId: string,
         @Request() req: any,
-    ) {
+    ): Promise<SuccessResponseDto> {
         const removedBy = req.user?.id || 'test-user-id';
         await this.conversationsService.removeMember(conversationId, userId, removedBy);
         return { success: true };
     }
 
-    @Patch(':id/members/:userId/settings')
+    @Patch(':conversationId/members/:userId/settings')
     @ApiOperation({ summary: 'Update member settings' })
-    @ApiResponse({ status: HttpStatus.OK, description: 'Settings updated' })
+    @ApiBody({ type: UpdateMemberSettingsDto, examples: UPDATE_MEMBER_SETTINGS_EXAMPLES })
+    @ApiResponse({ status: HttpStatus.OK, description: 'Settings updated', type: ConversationMemberDto })
     async updateMemberSettings(
-        @Param('id') conversationId: string,
+        @Param('conversationId') conversationId: string,
         @Param('userId') userId: string,
-        @Body() settings: { muted?: boolean; notifications?: boolean },
-    ) {
+        @Body() settings: UpdateMemberSettingsDto,
+    ): Promise<ConversationMemberDto> {
         return this.conversationsService.updateMemberSettings(conversationId, userId, settings);
     }
 
-    @Post(':id/read')
+    @Post(':conversationId/read')
     @ApiOperation({ summary: 'Mark conversation as read' })
-    @ApiResponse({ status: HttpStatus.OK, description: 'Marked as read' })
+    @ApiResponse({ status: HttpStatus.OK, description: 'Marked as read', type: SuccessResponseDto })
     async markAsRead(
-        @Param('id') conversationId: string,
+        @Param('conversationId') conversationId: string,
         @Request() req: any,
-    ) {
+    ): Promise<SuccessResponseDto> {
         const userId = req.user?.id || 'test-user-id';
         await this.conversationsService.markAsRead(conversationId, userId);
         return { success: true };
@@ -119,11 +116,11 @@ export class ConversationsController {
 
     @Get('direct/:otherUserId')
     @ApiOperation({ summary: 'Find or create direct conversation' })
-    @ApiResponse({ status: HttpStatus.OK, description: 'Direct conversation' })
+    @ApiResponse({ status: HttpStatus.OK, description: 'Direct conversation', type: ConversationResponseDto })
     async findOrCreateDirect(
         @Param('otherUserId') otherUserId: string,
         @Request() req: any,
-    ) {
+    ): Promise<ConversationResponseDto> {
         const userId = req.user?.id || 'test-user-id';
 
         // Try to find existing
