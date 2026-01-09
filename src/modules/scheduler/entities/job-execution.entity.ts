@@ -9,7 +9,6 @@ import {
   Index,
 } from 'typeorm';
 import { ExecutionStatus } from '../enums';
-import { Job } from './job.entity';
 
 @Entity({ name: 'job_executions', schema: 'scheduling' })
 @Index(['jobId', 'startedAt'])
@@ -74,9 +73,9 @@ export class JobExecution {
   updatedAt: Date;
 
   // Relations
-  @ManyToOne(() => Job, (job: Job) => job.executions, { onDelete: 'CASCADE' })
+  @ManyToOne('Job', (job) => job.executions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'job_id' })
-  job: Job;
+  job: any;
 
   // Helper methods
   markAsCompleted(output?: string): void {
