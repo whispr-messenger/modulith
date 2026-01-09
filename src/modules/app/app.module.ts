@@ -1,4 +1,5 @@
 import { CacheModule, CacheModuleAsyncOptions } from '@nestjs/cache-manager';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { ConfigModule, ConfigModuleOptions, ConfigService } from '@nestjs/config';
@@ -13,12 +14,20 @@ import { AuthModule } from '../auth/auth.module';
 import { LifecycleService } from './services/lifecycle.service';
 
 // Scheduling modules
-import { SchedulerModule } from '../scheduler/scheduler.module';
+import { SchedulerModule } from '../scheduling/scheduler.module';
 import { QueueModule } from '../queues/queue.module';
 import { MonitoringModule } from '../monitoring/monitoring.module';
 
 // Messaging module
 import { MessagingModule } from '../messaging/messaging.module';
+
+// User service modules
+import { UsersModule } from '../users/users.module';
+import { PrivacyModule } from '../privacy/privacy.module';
+import { ContactsModule } from '../contacts/contacts.module';
+import { BlockedUsersModule } from '../blocked-users/blocked-users.module';
+import { UserSearchModule } from '../search/user-search.module';
+import { GroupsModule } from '../groups/groups.module';
 
 // Environment variables
 const configModuleOptions: ConfigModuleOptions = {
@@ -51,6 +60,9 @@ const typeOrmModuleAsyncOptions: TypeOrmModuleAsyncOptions = {
 
     // Database (Postgres)
     TypeOrmModule.forRootAsync(typeOrmModuleAsyncOptions),
+    
+    // Event Emitter
+    EventEmitterModule.forRoot(),
 
     // Bull Queues (Redis) - using BullMQ
     BullModule.forRootAsync({
@@ -71,7 +83,18 @@ const typeOrmModuleAsyncOptions: TypeOrmModuleAsyncOptions = {
     // Core modules
     HealthModule,
     AuthModule,
+    
+    // Messaging module
     MessagingModule,
+    
+    // User service modules
+    UsersModule,
+    PrivacyModule,
+    ContactsModule,
+    BlockedUsersModule,
+    UserSearchModule,
+    GroupsModule,
+>>>>>>> 407d2985fdaa072b5afb94be959d22cf7212632a
   ],
   controllers: [AppController],
   providers: [LifecycleService],

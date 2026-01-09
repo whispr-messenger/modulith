@@ -1,0 +1,4 @@
+export { CacheService } from './cache.service';
+export { SearchIndexService } from './search-index.service';
+export type { SearchIndexEntry } from './search-index.service';
+export { CacheModule } from './cache.module';

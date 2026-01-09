@@ -56,11 +56,17 @@ export function typeOrmModuleOptionsFactory(
     return {
         type: 'postgres',
         ...databaseConfig,
-        entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
-        migrations: [__dirname + '/../../../migrations/*{.ts,.js}'],
-        migrationsRun: configService.get('DB_MIGRATIONS_RUN', 'false') === 'true',
-        synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
+        // Scans all modules folders to load the Entities
+        entities: [__dirname + '/../../../**/*.entity{.ts,.js}'],
+        // Indicates if logging is enabled or not. If set to true then query and error logging will be enabled.
         logging: configService.get('DB_LOGGING', 'false') === 'true',
+        // Migrations to be loaded and used for this data source
+        migrations: [__dirname + '/../../../database/migrations/*{.ts,.js}'],
+        // Indicates if migrations should be auto-run on every application launch.
+        migrationsRun: configService.get('DB_MIGRATIONS_RUN', 'false') === 'true',
+        // Indicates if database schema should be auto created on every application launch.
+        // Be careful with this option and don't use this in production - otherwise you can lose production data.
+        synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
     } as TypeOrmModuleOptions;
 }
 

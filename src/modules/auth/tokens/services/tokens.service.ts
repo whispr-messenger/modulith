@@ -18,11 +18,7 @@ export class TokensService {
 		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache
 	) { }
 
-	async generateTokenPair(
-		userId: string,
-		deviceId: string,
-		fingerprint: DeviceFingerprint
-	): Promise<TokenPair> {
+	async generateTokenPair(userId: string, deviceId: string, fingerprint: DeviceFingerprint): Promise<TokenPair> {
 		const deviceFingerprint = this.generateDeviceFingerprint(fingerprint);
 		const refreshTokenId = uuidv4();
 

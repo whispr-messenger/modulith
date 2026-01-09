@@ -15,7 +15,29 @@ describe('check-env', () => {
 		consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
 
 		// Clear environment variables
-		process.env = {};
+		[
+			'NODE_ENV',
+			'DB_HOST',
+			'DB_PORT',
+			'DB_USERNAME',
+			'DB_PASSWORD',
+			'DB_NAME',
+			'JWT_PRIVATE_KEY',
+			'JWT_PUBLIC_KEY',
+			'REDIS_HOST',
+			'REDIS_PORT',
+			'HTTP_PORT',
+			'GRPC_PORT',
+			'USER_SERVICE_GRPC_URL',
+			'MEDIA_SERVICE_GRPC_URL',
+			'TWILIO_ACCOUNT_SID',
+			'TWILIO_AUTH_TOKEN',
+			'TWILIO_FROM_NUMBER',
+		].forEach((key) => delete process.env[key]);
+
+		for (const key in process.env) {
+			delete process.env[key];
+		}
 
 		// Clear module cache to reset the global variables in check-env
 		jest.resetModules();
@@ -302,6 +324,10 @@ describe('check-env', () => {
 			process.env.TWILIO_AUTH_TOKEN = 'token123';
 			process.env.TWILIO_FROM_NUMBER = '+1234567890';
 
+			// Explicitly set to empty string to ensure they fail validation
+			process.env.USER_SERVICE_GRPC_URL = '';
+			process.env.MEDIA_SERVICE_GRPC_URL = '';
+
 			expect(() => runEnvChecks()).toThrow('Missing required environment variables');
 
 			expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -327,6 +353,11 @@ describe('check-env', () => {
 			process.env.GRPC_PORT = '50051';
 			process.env.USER_SERVICE_GRPC_URL = 'localhost:50052';
 			process.env.MEDIA_SERVICE_GRPC_URL = 'localhost:50053';
+
+			// Explicitly set to empty string to ensure they fail validation
+			process.env.TWILIO_ACCOUNT_SID = '';
+			process.env.TWILIO_AUTH_TOKEN = '';
+			process.env.TWILIO_FROM_NUMBER = '';
 
 			expect(() => runEnvChecks()).toThrow('Missing required environment variables');
 

@@ -1,25 +1,32 @@
 import runEnvChecks from './check-env';
 import { runEntrypoint } from './entrypoint';
+import { loadBootstrap } from './bootstrap-loader';
 
 // Mock the dependencies
 jest.mock('./check-env');
-jest.mock('../main.js', () => ({}), { virtual: true });
+jest.mock('./bootstrap-loader');
 
 describe('Entrypoint', () => {
 	let consoleLogSpy: jest.SpyInstance;
 	let consoleErrorSpy: jest.SpyInstance;
 	let processExitSpy: jest.SpyInstance;
 	let mockRunEnvChecks: jest.MockedFunction<typeof runEnvChecks>;
+	let mockLoadBootstrap: jest.MockedFunction<typeof loadBootstrap>;
 
 	beforeEach(() => {
 		// Setup spies
 		consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
 		consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-		processExitSpy = jest.spyOn(process, 'exit').mockImplementation((code?: number) => {
-			throw new Error(`process.exit(${code})`);
-		});
+		processExitSpy = jest
+			.spyOn(process, 'exit')
+			.mockImplementation((code?: number) => {
+				throw new Error(`process.exit(${code})`);
+			});
 
 		mockRunEnvChecks = runEnvChecks as jest.MockedFunction<typeof runEnvChecks>;
+		mockLoadBootstrap = loadBootstrap as jest.MockedFunction<
+			typeof loadBootstrap
+		>;
 
 		// Clear all mocks
 		jest.clearAllMocks();
@@ -47,7 +54,7 @@ describe('Entrypoint', () => {
 
 			// Assert
 			expect(mockRunEnvChecks).toHaveBeenCalledTimes(1);
-			expect(consoleLogSpy).toHaveBeenCalledWith('Starting Auth Service...\n');
+			expect(consoleLogSpy).toHaveBeenCalledWith('Starting Whispr Messenger...\n');
 			expect(processExitSpy).not.toHaveBeenCalled();
 		});
 
