@@ -8,7 +8,6 @@ import {
     Index,
     Unique,
 } from 'typeorm';
-import { Message } from './message.entity';
 
 @Entity('message_reactions', { schema: 'messaging' })
 @Unique(['messageId', 'userId', 'reaction'])
@@ -31,7 +30,7 @@ export class MessageReaction {
     createdAt: Date;
 
     // Relations
-    @ManyToOne(() => Message, (message: Message) => message.reactions, { onDelete: 'CASCADE' })
+    @ManyToOne('Message', 'reactions', { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'message_id' })
-    message: Message;
+    message: any;
 }

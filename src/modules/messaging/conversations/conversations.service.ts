@@ -121,19 +121,29 @@ export class ConversationsService {
 
     /**
      * List all conversations for a user
+     * Pinned conversations appear first, sorted by update time
+     * Archived conversations are excluded by default
      */
     async listUserConversations(
         userId: string,
-        options: { limit?: number; offset?: number } = {},
+        options: { limit?: number; offset?: number; includeArchived?: boolean } = {},
     ): Promise<ConversationWithUnreadCount[]> {
-        const { limit = 50, offset = 0 } = options;
+        const { limit = 50, offset = 0, includeArchived = false } = options;
 
-        const conversations = await this.conversationRepository
+        const queryBuilder = this.conversationRepository
             .createQueryBuilder('c')
             .innerJoin('c.members', 'm', 'm.userId = :userId AND m.isActive = true', { userId })
             .leftJoinAndSelect('c.members', 'allMembers')
-            .where('c.isActive = true')
-            .orderBy('c.updatedAt', 'DESC')
+            .where('c.isActive = true');
+
+        // Exclude archived conversations by default
+        if (!includeArchived) {
+            queryBuilder.andWhere('m.isArchived = false');
+        }
+
+        const conversations = await queryBuilder
+            .orderBy('m.isPinned', 'DESC')  // Pinned conversations first
+            .addOrderBy('c.updatedAt', 'DESC')  // Then by update time
             .skip(offset)
             .take(limit)
             .getMany();
@@ -272,5 +282,182 @@ export class ConversationsService {
      */
     async isUserMember(conversationId: string, userId: string): Promise<boolean> {
         return this.isMember(conversationId, userId);
+    }
+
+    /**
+     * Pin a conversation for a user
+     * Maximum 5 conversations can be pinned per user
+     * If the conversation is archived, it will be unarchived automatically
+     */
+    async pinConversation(conversationId: string, userId: string): Promise<ConversationMember> {
+        // Check if user is member
+        const member = await this.memberRepository.findOne({
+            where: { conversationId, userId, isActive: true },
+        });
+
+        if (!member) {
+            throw new NotFoundException('You are not a member of this conversation');
+        }
+
+        // Check if already pinned
+        if (member.isPinned) {
+            return member;
+        }
+
+        // Check pin limit (maximum 5)
+        const pinnedCount = await this.countPinnedConversations(userId);
+        if (pinnedCount >= 5) {
+            throw new BadRequestException('Maximum 5 conversations can be pinned. Please unpin another conversation first.');
+        }
+
+        // Pin the conversation and unarchive if necessary
+        member.isPinned = true;
+        if (member.isArchived) {
+            member.isArchived = false;
+            member.archivedAt = null;
+        }
+
+        const saved = await this.memberRepository.save(member);
+        this.logger.log(`User ${userId} pinned conversation ${conversationId}`);
+
+        return saved;
+    }
+
+    /**
+     * Unpin a conversation for a user
+     */
+    async unpinConversation(conversationId: string, userId: string): Promise<ConversationMember> {
+        const member = await this.memberRepository.findOne({
+            where: { conversationId, userId, isActive: true },
+        });
+
+        if (!member) {
+            throw new NotFoundException('You are not a member of this conversation');
+        }
+
+        if (!member.isPinned) {
+            return member;
+        }
+
+        member.isPinned = false;
+        const saved = await this.memberRepository.save(member);
+        this.logger.log(`User ${userId} unpinned conversation ${conversationId}`);
+
+        return saved;
+    }
+
+    /**
+     * Get all pinned conversations for a user
+     */
+    async getPinnedConversations(userId: string): Promise<Conversation[]> {
+        const conversations = await this.conversationRepository
+            .createQueryBuilder('c')
+            .innerJoin(
+                'c.members',
+                'm',
+                'm.userId = :userId AND m.isActive = true AND m.isPinned = true',
+                { userId }
+            )
+            .leftJoinAndSelect('c.members', 'allMembers')
+            .where('c.isActive = true')
+            .orderBy('c.updatedAt', 'DESC')
+            .getMany();
+
+        return conversations;
+    }
+
+    /**
+     * Count pinned conversations for a user
+     */
+    async countPinnedConversations(userId: string): Promise<number> {
+        return this.memberRepository.count({
+            where: {
+                userId,
+                isActive: true,
+                isPinned: true,
+            },
+        });
+    }
+
+    /**
+     * Archive a conversation for a user
+     * Automatically unpins the conversation if it was pinned
+     */
+    async archiveConversation(conversationId: string, userId: string): Promise<ConversationMember> {
+        const member = await this.memberRepository.findOne({
+            where: { conversationId, userId, isActive: true },
+        });
+
+        if (!member) {
+            throw new NotFoundException('You are not a member of this conversation');
+        }
+
+        if (member.isArchived) {
+            return member;
+        }
+
+        // Archive and unpin if necessary
+        member.isArchived = true;
+        member.archivedAt = new Date();
+        if (member.isPinned) {
+            member.isPinned = false;
+        }
+
+        const saved = await this.memberRepository.save(member);
+        this.logger.log(`User ${userId} archived conversation ${conversationId}`);
+
+        return saved;
+    }
+
+    /**
+     * Unarchive a conversation for a user
+     */
+    async unarchiveConversation(conversationId: string, userId: string): Promise<ConversationMember> {
+        const member = await this.memberRepository.findOne({
+            where: { conversationId, userId, isActive: true },
+        });
+
+        if (!member) {
+            throw new NotFoundException('You are not a member of this conversation');
+        }
+
+        if (!member.isArchived) {
+            return member;
+        }
+
+        member.isArchived = false;
+        member.archivedAt = null;
+
+        const saved = await this.memberRepository.save(member);
+        this.logger.log(`User ${userId} unarchived conversation ${conversationId}`);
+
+        return saved;
+    }
+
+    /**
+     * Get all archived conversations for a user
+     */
+    async getArchivedConversations(
+        userId: string,
+        options: { limit?: number; offset?: number } = {},
+    ): Promise<Conversation[]> {
+        const { limit = 50, offset = 0 } = options;
+
+        const conversations = await this.conversationRepository
+            .createQueryBuilder('c')
+            .innerJoin(
+                'c.members',
+                'm',
+                'm.userId = :userId AND m.isActive = true AND m.isArchived = true',
+                { userId }
+            )
+            .leftJoinAndSelect('c.members', 'allMembers')
+            .where('c.isActive = true')
+            .orderBy('m.archivedAt', 'DESC')
+            .skip(offset)
+            .take(limit)
+            .getMany();
+
+        return conversations;
     }
 }

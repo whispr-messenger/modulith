@@ -91,3 +91,34 @@ export const UPDATE_MEMBER_SETTINGS_EXAMPLES = {
         }
     }
 };
+
+export const PIN_CONVERSATION_EXAMPLES = {
+    example1: {
+        summary: 'Pin a conversation successfully',
+        description: 'Pin a conversation to keep it at the top of your conversation list',
+        value: {
+            success: true,
+            message: 'Conversation pinned successfully'
+        }
+    },
+    example2: {
+        summary: 'Pin limit reached (error)',
+        description: 'Maximum 5 conversations can be pinned at once',
+        value: {
+            statusCode: 400,
+            message: 'Maximum 5 conversations can be pinned. Please unpin another conversation first.',
+            error: 'Bad Request'
+        }
+    }
+};
+
+export const UNPIN_CONVERSATION_EXAMPLES = {
+    example1: {
+        summary: 'Unpin a conversation successfully',
+        description: 'Remove a conversation from your pinned list',
+        value: {
+            success: true,
+            message: 'Conversation unpinned successfully'
+        }
+    }
+};

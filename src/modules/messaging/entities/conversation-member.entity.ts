@@ -1,5 +1,4 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index, Unique, } from 'typeorm';
-import { Conversation } from './conversation.entity';
 
 @Entity('conversation_members', { schema: 'messaging' })
 @Unique(['conversationId', 'userId'])
@@ -23,14 +22,14 @@ export class ConversationMember {
         notifications?: boolean;
         muted?: boolean;
         nickname?: string;
-        
+
         // Nouveaux paramètres personnels
         showReadReceipts?: boolean;        // Envoi des accusés de lecture
         showTypingIndicator?: boolean;     // Affichage "en train d'écrire"
         soundEnabled?: boolean;            // Son des notifications
         muteUntil?: Date | null;          // Silencieux jusqu'à (remplace muted simple)
         customNickname?: string | null;    // Surnom personnalisé (direct)
-        
+
         // Paramètres de conversation (groupes uniquement)
         retentionDays?: number | null;          // Durée conservation messages
         allowReadReceipts?: boolean;            // Autoriser accusés de lecture
@@ -63,9 +62,9 @@ export class ConversationMember {
     updatedAt: Date;
 
     // Relations
-    @ManyToOne(() => Conversation, (conversation: Conversation) => conversation.members, { onDelete: 'CASCADE' })
+    @ManyToOne('Conversation', 'members', { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'conversation_id' })
-    conversation: Conversation;
+    conversation: any;
 
     // Helper methods
     isAdmin(): boolean {

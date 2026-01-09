@@ -6,3 +6,8 @@ export * from './member-list-response.dto';
 export * from './success-response.dto';
 export * from './add-member.dto';
 export * from './update-member-settings.dto';
+export * from './pin-conversation.dto';
+export * from './archive-conversation.dto';
+export * from './search-conversations.dto';
+export * from './conversation-settings.dto';
+export * from './update-conversation-settings.dto';

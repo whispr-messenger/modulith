@@ -7,8 +7,6 @@ import {
     OneToMany,
     Index,
 } from 'typeorm';
-import { ConversationMember } from './conversation-member.entity';
-import { Message } from './message.entity';
 
 export enum ConversationType {
     DIRECT = 'direct',
@@ -31,7 +29,6 @@ export class Conversation {
     type: ConversationType;
 
     @Column({ type: 'uuid', nullable: true, name: 'external_group_id' })
-    @Index()
     externalGroupId: string | null;
 
     @Column({ type: 'simple-json', default: {} })
@@ -47,11 +44,11 @@ export class Conversation {
     updatedAt: Date;
 
     // Relations
-    @OneToMany(() => ConversationMember, (member: ConversationMember) => member.conversation, { cascade: true })
-    members: ConversationMember[];
+    @OneToMany('ConversationMember', 'conversation', { cascade: true })
+    members: any[];
 
-    @OneToMany(() => Message, (message: Message) => message.conversation, { cascade: true })
-    messages: Message[];
+    @OneToMany('Message', 'conversation', { cascade: true })
+    messages: any[];
 
     // Helper methods
     isDirect(): boolean {
