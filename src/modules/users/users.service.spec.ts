@@ -1,23 +1,17 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NotFoundException, ConflictException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UsersService } from './users.service';
-import {
-  User,
-  PrivacySettings,
-  PrivacyLevel,
-  UserSearchIndex,
-} from '../../entities';
+import { User } from '../../entities';
 import { CreateUserDto, UpdateUserDto } from '../../dto';
 import { CacheService } from '../cache';
 
 describe('UsersService', () => {
   let service: UsersService;
   let _userRepository: Repository<User>;
-  let _privacyRepository: Repository<PrivacySettings>;
-  let _cacheService: CacheService;
+  let eventEmitter: EventEmitter2;
 
   const mockUser: Partial<User> = {
     id: '123e4567-e89b-12d3-a456-426614174000',
@@ -28,15 +22,6 @@ describe('UsersService', () => {
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
-  };
-
-  const mockPrivacySettings: Partial<PrivacySettings> = {
-    id: '123e4567-e89b-12d3-a456-426614174001',
-    userId: mockUser.id,
-    profilePicturePrivacy: PrivacyLevel.EVERYONE,
-    firstNamePrivacy: PrivacyLevel.EVERYONE,
-    lastNamePrivacy: PrivacyLevel.CONTACTS,
-    biographyPrivacy: PrivacyLevel.EVERYONE,
   };
 
   const mockQueryRunner = {
@@ -72,12 +57,7 @@ describe('UsersService', () => {
         createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
       },
     },
-  };
-
-  const mockPrivacyRepository = {
-    create: jest.fn(),
-    save: jest.fn(),
-    findOne: jest.fn(),
+    softDelete: jest.fn(),
   };
 
   const mockCacheService = {
@@ -87,10 +67,8 @@ describe('UsersService', () => {
     exists: jest.fn(),
   };
 
-  const mockUserSearchIndexRepository = {
-    create: jest.fn(),
-    save: jest.fn(),
-    findOne: jest.fn(),
+  const mockEventEmitter = {
+    emit: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -102,12 +80,8 @@ describe('UsersService', () => {
           useValue: mockUserRepository,
         },
         {
-          provide: getRepositoryToken(PrivacySettings),
-          useValue: mockPrivacyRepository,
-        },
-        {
-          provide: getRepositoryToken(UserSearchIndex),
-          useValue: mockUserSearchIndexRepository,
+          provide: EventEmitter2,
+          useValue: mockEventEmitter,
         },
         {
           provide: CacheService,
@@ -118,10 +92,7 @@ describe('UsersService', () => {
 
     service = module.get<UsersService>(UsersService);
     _userRepository = module.get<Repository<User>>(getRepositoryToken(User));
-    _privacyRepository = module.get<Repository<PrivacySettings>>(
-      getRepositoryToken(PrivacySettings),
-    );
-    _cacheService = module.get<CacheService>(CacheService);
+    eventEmitter = module.get<EventEmitter2>(EventEmitter2);
   });
 
   afterEach(() => {
@@ -144,14 +115,16 @@ describe('UsersService', () => {
       mockUserRepository.findOne.mockResolvedValue(null);
       mockUserRepository.create.mockReturnValue(mockUser);
       mockQueryRunner.manager.save.mockResolvedValue(mockUser);
-      mockPrivacyRepository.create.mockReturnValue(mockPrivacySettings);
-      mockUserSearchIndexRepository.create.mockReturnValue({});
 
       const result = await service.create(createUserDto);
 
       expect(result).toEqual(mockUser);
       expect(mockUserRepository.findOne).toHaveBeenCalledTimes(2); // Check phoneNumber and username
       expect(mockUserRepository.create).toHaveBeenCalledWith(createUserDto);
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        'user.created',
+        expect.anything(),
+      );
     });
 
     it('should throw ConflictException if phoneNumber already exists', async () => {
@@ -184,7 +157,7 @@ describe('UsersService', () => {
 
       expect(result).toEqual(mockUser);
       expect(mockUserRepository.findOne).toHaveBeenCalledWith({
-        where: { id: mockUser.id },
+        where: { id: mockUser.id! },
         relations: ['privacySettings'],
       });
     });
@@ -206,7 +179,7 @@ describe('UsersService', () => {
 
       expect(result).toEqual(mockUser);
       expect(mockUserRepository.findOne).toHaveBeenCalledWith({
-        where: { username: mockUser.username },
+        where: { username: mockUser.username! },
         relations: ['privacySettings'],
       });
     });
@@ -227,7 +200,7 @@ describe('UsersService', () => {
 
       expect(result).toEqual(mockUser);
       expect(mockUserRepository.findOne).toHaveBeenCalledWith({
-        where: { phoneNumber: mockUser.phoneNumber },
+        where: { phoneNumber: mockUser.phoneNumber! },
         relations: ['privacySettings'],
       });
     });
@@ -254,7 +227,7 @@ describe('UsersService', () => {
         userId: mockUser.id,
       });
 
-      const result = await service.update(mockUser.id, updateUserDto);
+      const result = await service.update(mockUser.id!, updateUserDto);
 
       expect(result).toEqual(updatedUser);
     });
@@ -276,7 +249,7 @@ describe('UsersService', () => {
         .mockResolvedValueOnce(existingUser); // username check
 
       await expect(
-        service.update(mockUser.id, updateWithUsername),
+        service.update(mockUser.id!, updateWithUsername),
       ).rejects.toThrow(ConflictException);
     });
   });
@@ -286,9 +259,9 @@ describe('UsersService', () => {
       mockUserRepository.findOne.mockResolvedValue(mockUser);
       mockUserRepository.update.mockResolvedValue(undefined);
 
-      await service.deactivate(mockUser.id);
+      await service.deactivate(mockUser.id!);
 
-      expect(mockUserRepository.update).toHaveBeenCalledWith(mockUser.id, {
+      expect(mockUserRepository.update).toHaveBeenCalledWith(mockUser.id!, {
         isActive: false,
       });
     });

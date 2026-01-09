@@ -2,6 +2,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { OnEvent } from '@nestjs/event-emitter';
+import { UserCreatedEvent } from '../users/events/user-created.event';
 import { PrivacySettings, PrivacyLevel, User } from '../../entities';
 import { UpdatePrivacySettingsDto } from '../../dto';
 
@@ -125,6 +127,14 @@ export class PrivacyService {
   async canSearchByUsername(targetUserId: string): Promise<boolean> {
     const privacySettings = await this.getPrivacySettings(targetUserId);
     return privacySettings.searchByUsername;
+  }
+
+  @OnEvent('user.created')
+  async handleUserCreated(event: UserCreatedEvent) {
+    const privacySettings = this.privacySettingsRepository.create({
+      userId: event.userId,
+    });
+    await this.privacySettingsRepository.save(privacySettings);
   }
 
   async shouldSendReadReceipts(userId: string): Promise<boolean> {

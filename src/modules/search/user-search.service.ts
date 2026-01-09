@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike, In } from 'typeorm';
-import { User, PrivacySettings } from '../../entities';
+import { OnEvent } from '@nestjs/event-emitter';
+import * as crypto from 'crypto';
+import { UserCreatedEvent } from '../users/events/user-created.event';
+import { User, PrivacySettings, UserSearchIndex } from '../../entities';
 import { SearchIndexService } from '../cache';
 import { PrivacyService } from '../privacy/privacy.service';
 
@@ -35,9 +38,27 @@ export class UserSearchService {
     private userRepository: Repository<User>,
     @InjectRepository(PrivacySettings)
     private privacyRepository: Repository<PrivacySettings>,
+    @InjectRepository(UserSearchIndex)
+    private userSearchIndexRepository: Repository<UserSearchIndex>,
     private searchIndexService: SearchIndexService,
     private privacyService: PrivacyService,
   ) { }
+
+  @OnEvent('user.created')
+  async handleUserCreated(event: UserCreatedEvent) {
+    const searchIndex = this.userSearchIndexRepository.create({
+      userId: event.userId,
+      phoneNumberHash: this.hashPhoneNumber(event.phoneNumber),
+      usernameNormalized: event.username.toLowerCase(),
+      firstNameNormalized: event.firstName.toLowerCase(),
+      lastNameNormalized: event.lastName?.toLowerCase() || '',
+    });
+    await this.userSearchIndexRepository.save(searchIndex);
+  }
+
+  private hashPhoneNumber(phoneNumber: string): string {
+    return crypto.createHash('sha256').update(phoneNumber).digest('hex');
+  }
 
   /**
    * Search user by phone number

@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 
-@Entity('user_search_index')
+@Entity({ name: 'user_search_index', schema: 'search' })
 export class UserSearchIndex {
   @PrimaryColumn('uuid')
   userId: string;

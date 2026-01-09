@@ -1,10 +1,11 @@
 import { CacheModule, CacheModuleAsyncOptions } from '@nestjs/cache-manager';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigModuleOptions, ConfigService } from '@nestjs/config';
 import { cacheModuleOptionsFactory, typeOrmModuleOptionsFactory } from './config';
 import { TypeOrmModule, TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
 import { HealthModule } from '../heatlh/health.module';
-import { AuthModule } from '../auth/auth.module';
+// import { AuthModule } from '../auth/auth.module';
 
 // Import all user-service modules
 import { UsersModule } from '../users/users.module';
@@ -43,6 +44,7 @@ const typeOrmModuleAsyncOptions: TypeOrmModuleAsyncOptions = {
     ConfigModule.forRoot(configModuleOptions),
     CacheModule.registerAsync(cacheModuleAsyncOptions),
     TypeOrmModule.forRootAsync(typeOrmModuleAsyncOptions),
+    EventEmitterModule.forRoot(),
     HealthModule,
     // AuthModule,
     // User service modules

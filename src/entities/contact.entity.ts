@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 
-@Entity('contacts')
+@Entity({ name: 'contacts', schema: 'contacts' })
 @Index(['userId', 'contactId'], { unique: true })
 export class Contact {
   @PrimaryGeneratedColumn('uuid')

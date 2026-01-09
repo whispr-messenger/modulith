@@ -9,13 +9,17 @@ const mockConsoleError = jest.spyOn(console, 'error').mockImplementation();
 // Mock process.exit
 const mockExit = jest.spyOn(process, 'exit').mockImplementation();
 
+const httpRequestMock = jest.fn();
+jest.mock('http', () => ({
+	request: httpRequestMock,
+}));
+
 describe('health-check', () => {
 	let mockRequest: EventEmitter & {
 		end: jest.Mock;
 		destroy: jest.Mock;
 	};
 	let mockResponse: EventEmitter & http.IncomingMessage;
-	let httpRequestSpy: jest.SpyInstance;
 
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -36,9 +40,7 @@ describe('health-check', () => {
 	afterEach(() => {
 		mockConsoleLog.mockClear();
 		mockConsoleError.mockClear();
-		if (httpRequestSpy) {
-			httpRequestSpy.mockRestore();
-		}
+		httpRequestMock.mockReset();
 	});
 
 	afterAll(() => {
@@ -48,7 +50,7 @@ describe('health-check', () => {
 	});
 
 	const mockHttpRequest = (response?: EventEmitter & http.IncomingMessage) => {
-		httpRequestSpy = jest.spyOn(http, 'request').mockImplementation((options: any, callback?: any) => {
+		httpRequestMock.mockImplementation((options: any, callback?: any) => {
 			if (callback && response) {
 				// Call callback synchronously to avoid async issues in tests
 				callback(response);
@@ -153,7 +155,7 @@ describe('health-check', () => {
 		loadHealthCheck();
 
 		expect(mockConsoleLog).toHaveBeenCalledWith(
-			expect.stringContaining('Target: GET http://localhost:3001/health/ready')
+			expect.stringContaining('Target: GET http://127.0.0.1:3001/api/v1/health/ready')
 		);
 		expect(mockConsoleLog).toHaveBeenCalledWith(expect.stringContaining('Timeout: 3000ms'));
 	});

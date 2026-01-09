@@ -8,7 +8,12 @@ import {
   UserSearchResult,
   SearchOptions,
 } from './user-search.service';
-import { User, PrivacySettings, PrivacyLevel } from '../../entities';
+import {
+  User,
+  PrivacySettings,
+  PrivacyLevel,
+  UserSearchIndex,
+} from '../../entities';
 import { SearchIndexService } from '../cache';
 import { PrivacyService } from '../privacy/privacy.service';
 
@@ -18,6 +23,7 @@ describe('UserSearchService', () => {
   let privacySettingsRepository: Repository<PrivacySettings>;
   let searchIndexService: SearchIndexService;
   let privacyService: PrivacyService;
+  let userSearchIndexRepository: Repository<UserSearchIndex>;
 
   const mockUser: User = {
     id: '123e4567-e89b-12d3-a456-426614174000',
@@ -31,14 +37,14 @@ describe('UserSearchService', () => {
     isActive: true,
     createdAt: new Date(),
     updatedAt: new Date(),
-    privacySettings: null,
+    privacySettings: null as any,
     contacts: [],
     contactedBy: [],
     blockedUsers: [],
     blockedBy: [],
     createdGroups: [],
     groupMemberships: [],
-    searchIndex: null,
+    searchIndex: null as any,
   };
 
   const mockPrivacySettings: PrivacySettings = {
@@ -63,6 +69,12 @@ describe('UserSearchService', () => {
   };
 
   const mockPrivacySettingsRepository = {
+    findOne: jest.fn(),
+  };
+
+  const mockUserSearchIndexRepository = {
+    create: jest.fn(),
+    save: jest.fn(),
     findOne: jest.fn(),
   };
 
@@ -99,6 +111,10 @@ describe('UserSearchService', () => {
           useValue: mockPrivacySettingsRepository,
         },
         {
+          provide: getRepositoryToken(UserSearchIndex),
+          useValue: mockUserSearchIndexRepository,
+        },
+        {
           provide: SearchIndexService,
           useValue: mockSearchIndexService,
         },
@@ -113,6 +129,9 @@ describe('UserSearchService', () => {
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
     privacySettingsRepository = module.get<Repository<PrivacySettings>>(
       getRepositoryToken(PrivacySettings),
+    );
+    userSearchIndexRepository = module.get<Repository<UserSearchIndex>>(
+      getRepositoryToken(UserSearchIndex),
     );
     searchIndexService = module.get<SearchIndexService>(SearchIndexService);
     privacyService = module.get<PrivacyService>(PrivacyService);

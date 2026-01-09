@@ -14,7 +14,7 @@ export enum PrivacyLevel {
   NOBODY = 'nobody',
 }
 
-@Entity('privacy_settings')
+@Entity({ name: 'privacy_settings', schema: 'privacy' })
 export class PrivacySettings {
   @PrimaryGeneratedColumn('uuid')
   id: string;

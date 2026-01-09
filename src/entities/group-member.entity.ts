@@ -17,7 +17,7 @@ export enum GroupRole {
   MEMBER = 'member',
 }
 
-@Entity('group_members')
+@Entity({ name: 'group_members', schema: 'groups' })
 @Index(['groupId', 'userId'], { unique: true })
 export class GroupMember {
   @PrimaryGeneratedColumn('uuid')

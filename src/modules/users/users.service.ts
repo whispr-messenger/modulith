@@ -5,7 +5,9 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User, PrivacySettings, UserSearchIndex } from '../../entities';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { UserCreatedEvent } from './events/user-created.event';
+import { User, UserSearchIndex } from '../../entities';
 import { CreateUserDto, UpdateUserDto } from '../../dto';
 import * as crypto from 'crypto';
 
@@ -14,10 +16,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @InjectRepository(PrivacySettings)
-    private readonly privacySettingsRepository: Repository<PrivacySettings>,
-    @InjectRepository(UserSearchIndex)
-    private readonly userSearchIndexRepository: Repository<UserSearchIndex>,
+    private readonly eventEmitter: EventEmitter2,
   ) { }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -47,23 +46,20 @@ export class UsersService {
       const user = this.userRepository.create(createUserDto);
       const savedUser = await queryRunner.manager.save(user);
 
-      // Créer les paramètres de confidentialité par défaut
-      const privacySettings = this.privacySettingsRepository.create({
-        userId: savedUser.id,
-      });
-      await queryRunner.manager.save(privacySettings);
-
-      // Créer l'index de recherche
-      const searchIndex = this.userSearchIndexRepository.create({
-        userId: savedUser.id,
-        phoneNumberHash: this.hashPhoneNumber(createUserDto.phoneNumber),
-        usernameNormalized: createUserDto.username.toLowerCase(),
-        firstNameNormalized: createUserDto.firstName.toLowerCase(),
-        lastNameNormalized: createUserDto.lastName?.toLowerCase() || '',
-      });
-      await queryRunner.manager.save(searchIndex);
-
       await queryRunner.commitTransaction();
+
+      // Émettre l'événement de création d'utilisateur
+      this.eventEmitter.emit(
+        'user.created',
+        new UserCreatedEvent(
+          savedUser.id,
+          savedUser.phoneNumber,
+          savedUser.username,
+          savedUser.firstName,
+          savedUser.lastName,
+        ),
+      );
+
       return savedUser;
     } catch (error) {
       await queryRunner.rollbackTransaction();
@@ -196,9 +192,5 @@ export class UsersService {
   async remove(id: string): Promise<void> {
     await this.findOne(id);
     await this.userRepository.softDelete(id);
-  }
-
-  private hashPhoneNumber(phoneNumber: string): string {
-    return crypto.createHash('sha256').update(phoneNumber).digest('hex');
   }
 }

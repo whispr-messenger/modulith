@@ -15,19 +15,15 @@ import { Group } from './group.entity';
 import { GroupMember } from './group-member.entity';
 import { UserSearchIndex } from './user-search-index.entity';
 
-@Entity('users')
-@Index(['phoneNumber'], { unique: true })
-@Index(['username'], { unique: true })
+@Entity({ name: 'users', schema: 'users' })
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ type: 'varchar', length: 20, unique: true })
-  @Index()
   phoneNumber: string;
 
   @Column({ type: 'varchar', length: 50, unique: true })
-  @Index()
   username: string;
 
   @Column({ type: 'varchar', length: 100 })

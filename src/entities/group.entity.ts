@@ -11,7 +11,7 @@ import {
 import { User } from './user.entity';
 import { GroupMember } from './group-member.entity';
 
-@Entity('groups')
+@Entity({ name: 'groups', schema: 'groups' })
 export class Group {
   @PrimaryGeneratedColumn('uuid')
   id: string;
