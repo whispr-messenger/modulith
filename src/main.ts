@@ -13,7 +13,9 @@ async function bootstrap() {
   const port = configService.get<number>('HTTP_PORT', 3001);
   const globalPrefix = 'api';
 
-  app.setGlobalPrefix(globalPrefix);
+  app.setGlobalPrefix(globalPrefix, {
+    exclude: ['/'],
+  });
 
   app.enableVersioning({
     type: VersioningType.URI,

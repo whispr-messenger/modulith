@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Device } from '../../modules/devices/device.entity';
-import { SmsService } from 'src/modules/phone-verification/services/sms/sms.service';
+import { Device } from '../../devices/entities/device.entity';
+import { SmsService } from '../../phone-verification/services/sms/sms.service';
 import { UserAuthService } from '../../common/services/user-auth.service';
 
 interface NotificationData {
@@ -18,7 +18,7 @@ export class NotificationService {
 	constructor(
 		private readonly userAuthService: UserAuthService,
 		private readonly smsService: SmsService
-	) {}
+	) { }
 
 	async notifyNewDeviceLogin(data: NotificationData): Promise<void> {
 		try {

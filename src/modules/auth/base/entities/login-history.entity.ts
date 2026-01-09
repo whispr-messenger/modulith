@@ -8,7 +8,7 @@ import {
 	Index,
 } from 'typeorm';
 import { UserAuth } from '../../common/entities/user-auth.entity';
-import { Device } from '../../modules/devices/device.entity';
+import { Device } from '../../devices/entities/device.entity';
 
 @Entity('login_history')
 @Index(['userId'])

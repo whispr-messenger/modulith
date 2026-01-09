@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { VerificationRequestDto, VerificationConfirmDto } from '../../../../base/dto';
+import { VerificationRequestDto, VerificationConfirmDto } from '../../dto';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { parsePhoneNumberWithError } from 'libphonenumber-js';
 import type { Cache } from 'cache-manager';
@@ -26,7 +26,7 @@ import { VerificationRequestResponse } from '../../types/verification-request-re
 @Injectable()
 export class PhoneVerificationService {
 	private readonly logger = new Logger(PhoneVerificationService.name);
-	private readonly isDemoMode; 
+	private readonly isDemoMode;
 	private readonly VERIFICATION_TTL = 15 * 60;
 	private readonly MAX_ATTEMPTS = 5;
 	private readonly RATE_LIMIT_TTL = 60 * 60;

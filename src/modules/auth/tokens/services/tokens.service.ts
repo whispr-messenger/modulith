@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'node:crypto';
 import { DeviceFingerprint } from '../../devices/types/device-fingerprint.interface';
@@ -16,7 +16,7 @@ export class TokensService {
 	constructor(
 		private readonly jwtService: JwtService,
 		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache
-	) {}
+	) { }
 
 	async generateTokenPair(
 		userId: string,

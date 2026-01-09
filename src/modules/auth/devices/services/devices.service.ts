@@ -1,15 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Device } from './device.entity';
-import { DeviceRegistrationData } from './device-registration-data.interface';
+import { Device } from '../entities/device.entity';
+import { DeviceRegistrationData } from '../types/device-registration-data.interface';
 
 @Injectable()
 export class DevicesService {
 	constructor(
 		@InjectRepository(Device)
 		private readonly deviceRepository: Repository<Device>
-	) {}
+	) { }
 
 	async registerDevice(data: DeviceRegistrationData): Promise<Device> {
 		const existingDevice = await this.deviceRepository.findOne({

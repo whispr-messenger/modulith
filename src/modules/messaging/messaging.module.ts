@@ -1,0 +1,57 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+// Entities
+import {
+    Conversation,
+    ConversationMember,
+    Message,
+    DeliveryStatus,
+    MessageReaction,
+} from './entities';
+
+// Services
+import { ConversationsService } from './conversations/conversations.service';
+import { MessagesService } from './messages/messages.service';
+import { MessagingEventsService } from './events/messaging-events.service';
+import { PresenceService } from './presence/presence.service';
+
+// Controllers
+import { ConversationsController } from './conversations/conversations.controller';
+import { MessagesController } from './messages/messages.controller';
+
+// Gateways (WebSocket)
+import { ConversationGateway } from './gateways/conversation.gateway';
+
+@Module({
+    imports: [
+        TypeOrmModule.forFeature([
+            Conversation,
+            ConversationMember,
+            Message,
+            DeliveryStatus,
+            MessageReaction,
+        ]),
+    ],
+    controllers: [
+        ConversationsController,
+        MessagesController,
+    ],
+    providers: [
+        // Services
+        ConversationsService,
+        MessagesService,
+        MessagingEventsService,
+        PresenceService,
+        // WebSocket Gateways
+        ConversationGateway,
+    ],
+    exports: [
+        ConversationsService,
+        MessagesService,
+        MessagingEventsService,
+        PresenceService,
+        ConversationGateway,
+    ],
+})
+export class MessagingModule { }

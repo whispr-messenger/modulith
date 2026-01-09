@@ -7,6 +7,7 @@ import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
 import { BaseAuthenticationController } from './controllers/base-authentication.controller';
 import { BaseAuthenticationService, NotificationService } from './services';
 import { BackupCodesService } from '../two-factor-authentication/backup-codes/backup-codes.service';
+import { UserAuth } from '../common/entities/user-auth.entity';
 
 import { JwtAuthGuard } from './guards';
 import { jwtModuleOptionsFactory } from './config/jwt.config';
@@ -54,4 +55,4 @@ const throttlerModuleOptions: ThrottlerModuleOptions = [
 	// which import this module.
 	exports: [BaseAuthenticationService, JwtAuthGuard],
 })
-export class BaseAuthenticationModule {}
+export class BaseAuthenticationModule { }
