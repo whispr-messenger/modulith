@@ -1,1 +1,1 @@
-export type verificationPurpose = 'registration' | 'login' | 'recovery';
+export type VerificationPurpose = 'registration' | 'login' | 'recovery';

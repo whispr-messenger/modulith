@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BackupCode } from '../../base/entities/backup-code.entity';
+import { BackupCode } from '../entities/backup-code.entity';
 import * as crypto from 'node:crypto';
 import * as bcrypt from 'bcrypt';
 

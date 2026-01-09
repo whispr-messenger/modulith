@@ -10,6 +10,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 // Core modules
 import { HealthModule } from '../heatlh/health.module';
 import { AuthModule } from '../auth/auth.module';
+import { LifecycleService } from './services/lifecycle.service';
 
 // Scheduling modules
 import { SchedulerModule } from '../scheduler/scheduler.module';
@@ -69,16 +70,9 @@ const typeOrmModuleAsyncOptions: TypeOrmModuleAsyncOptions = {
 
     // Core modules
     HealthModule,
-    // AuthModule,
-
-    // Scheduling modules
-    // SchedulerModule,
-    // QueueModule,
-    // MonitoringModule,
-
-    // Messaging module
-    MessagingModule,
+    AuthModule,
   ],
   controllers: [AppController],
+  providers: [LifecycleService],
 })
 export class AppModule { }

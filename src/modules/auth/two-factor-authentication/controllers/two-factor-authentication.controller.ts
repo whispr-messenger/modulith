@@ -1,9 +1,8 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Request, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { TwoFactorSetupDto } from '../../common/dto/two-factor-setup.dto';
-import { TwoFactorVerifyDto } from '../../common/dto/two-factor-verify.dto';
-import { JwtAuthGuard } from '../../base/guards';
+import { TwoFactorSetupDto, TwoFactorVerifyDto } from '../../two-factor-authentication/dto';
 import { TwoFactorAuthenticationService } from '../services/two-factor-authentication.service';
+import { JwtAuthGuard } from '../../tokens/guards';
 
 @Controller('2fa')
 export class TwoFactorAuthenticationController {

@@ -1,7 +1,8 @@
 import { Controller, Delete, Get, HttpCode, HttpStatus, Request, Param, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../base/guards';
+import { JwtAuthGuard } from '../../tokens/guards';
 import { DevicesService } from '../services/devices.service';
+import { DeviceResponseDto } from '../dto';
 
 @Controller('devices')
 export class DevicesController {
@@ -11,9 +12,9 @@ export class DevicesController {
 	@UseGuards(JwtAuthGuard)
 	@ApiBearerAuth()
 	@ApiOperation({ summary: 'Get all devices associated with user account' })
-	@ApiResponse({ status: 200, description: 'List of user devices' })
+	@ApiResponse({ status: 200, description: 'List of user devices', type: [DeviceResponseDto] })
 	@ApiResponse({ status: 401, description: 'Unauthorized' })
-	async getDevices(@Request() req: any) {
+	async getDevices(@Request() req: any): Promise<DeviceResponseDto[]> {
 		return this.deviceService.getUserDevices(req.user.sub);
 	}
 

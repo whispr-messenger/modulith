@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { UserAuth } from '../../common/entities/user-auth.entity';
 
-@Entity('devices')
+@Entity({ name: 'devices', schema: 'auth' })
 @Index(['userId'])
 @Index(['lastActive'])
 @Index(['isActive'])
