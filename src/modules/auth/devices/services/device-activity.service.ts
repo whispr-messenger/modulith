@@ -5,7 +5,7 @@ import { DeviceRepository } from '../repositories/device.repository';
 export class DeviceActivityService {
 	private readonly logger = new Logger(DeviceActivityService.name);
 
-	constructor(private readonly deviceRepository: DeviceRepository) {}
+	constructor(private readonly deviceRepository: DeviceRepository) { }
 
 	async updateLastActive(deviceId: string): Promise<void> {
 		const result = await this.deviceRepository.update(
