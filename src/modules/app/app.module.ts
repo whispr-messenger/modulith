@@ -71,6 +71,7 @@ const typeOrmModuleAsyncOptions: TypeOrmModuleAsyncOptions = {
     // Core modules
     HealthModule,
     AuthModule,
+    MessagingModule,
   ],
   controllers: [AppController],
   providers: [LifecycleService],
