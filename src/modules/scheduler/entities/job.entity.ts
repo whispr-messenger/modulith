@@ -9,7 +9,7 @@ import {
   Index,
 } from 'typeorm';
 import { JobStatus, JobType } from '../enums';
-import { Schedule } from './schedule.entity';
+import type { Schedule } from './schedule.entity';
 import { JobExecution } from './job-execution.entity';
 
 @Entity('jobs')
