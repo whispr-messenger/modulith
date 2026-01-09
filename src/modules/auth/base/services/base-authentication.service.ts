@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
 import { UserAuth } from '../../common/entities/user-auth.entity';
 import { UserAuthService } from '../../common/services/user-auth.service';
-import { DevicesService } from '../../devices/devices.service';
+import { DevicesService } from '../../devices/services/devices.service';
 import { DeviceFingerprint } from '../../devices/types/device-fingerprint.interface';
 import { TokenPair } from '../../tokens/types/token-pair.interface';
 import { PhoneVerificationService } from '../../phone-verification/services/phone-verification/phone-verification.service';

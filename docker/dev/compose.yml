@@ -22,6 +22,8 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     expose:
       - ${POSTGRES_PORT}
+    ports:
+      - "5433:${POSTGRES_PORT}"
     networks:
       - whispr-network
     healthcheck:
@@ -39,6 +41,8 @@ services:
     command: redis-server /usr/local/etc/redis/redis.conf
     expose:
       - ${REDIS_PORT}
+    ports:
+      - "6380:${REDIS_PORT}"
     networks:
       - whispr-network
     healthcheck:
