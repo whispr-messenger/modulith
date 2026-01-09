@@ -232,4 +232,106 @@ describe('ConversationsService', () => {
             expect(result).toBe(false);
         });
     });
+
+    describe('createConversation edge cases', () => {
+        it('should throw BadRequestException for direct chat with wrong member count', async () => {
+            const dto: CreateConversationDto = {
+                type: ConversationType.DIRECT,
+                memberIds: ['user-2', 'user-3', 'user-4'],
+            };
+            const creatorId = 'user-1';
+
+            // Even after adding creator, total > 2
+            await expect(service.createConversation(dto, creatorId)).rejects.toThrow();
+        });
+    });
+
+    describe('addMember edge cases', () => {
+        it('should throw BadRequestException for direct conversations', async () => {
+            const conversation = { id: 'conv-id', type: ConversationType.DIRECT };
+            mockConversationRepository.findOne.mockResolvedValue(conversation);
+
+            await expect(service.addMember('conv-id', 'user-3', 'user-1')).rejects.toThrow();
+        });
+
+        it('should throw BadRequestException if user is already active member', async () => {
+            const conversation = { id: 'conv-id', type: ConversationType.GROUP };
+            mockConversationRepository.findOne.mockResolvedValue(conversation);
+            const existingMember = { id: 'member-id', isActive: true };
+            mockMemberRepository.findOne.mockResolvedValue(existingMember);
+
+            await expect(service.addMember('conv-id', 'user-2', 'user-1')).rejects.toThrow('already a member');
+        });
+    });
+
+    describe('removeMember edge cases', () => {
+        it('should throw NotFoundException if member not found', async () => {
+            mockMemberRepository.findOne.mockResolvedValue(null);
+
+            await expect(service.removeMember('conv-id', 'user-2', 'user-1')).rejects.toThrow();
+        });
+    });
+
+    describe('updateMemberSettings', () => {
+        it('should update member settings', async () => {
+            const member = { id: 'member-id', settings: { notifications: true } };
+            mockMemberRepository.findOne.mockResolvedValue(member);
+            mockMemberRepository.save.mockResolvedValue({ ...member, settings: { notifications: false } });
+
+            const result = await service.updateMemberSettings('conv-id', 'user-1', { notifications: false });
+
+            expect(mockMemberRepository.save).toHaveBeenCalled();
+            expect(result.settings.notifications).toBe(false);
+        });
+
+        it('should throw NotFoundException if member not found', async () => {
+            mockMemberRepository.findOne.mockResolvedValue(null);
+
+            await expect(
+                service.updateMemberSettings('conv-id', 'user-1', { muted: true })
+            ).rejects.toThrow('not found');
+        });
+    });
+
+    describe('deactivateConversation', () => {
+        it('should deactivate conversation', async () => {
+            await service.deactivateConversation('conv-id');
+
+            expect(mockConversationRepository.update).toHaveBeenCalledWith('conv-id', { isActive: false });
+        });
+    });
+
+    describe('getMembers', () => {
+        it('should return active members', async () => {
+            const members = [{ id: 'm1' }, { id: 'm2' }];
+            mockMemberRepository.find.mockResolvedValue(members);
+
+            const result = await service.getMembers('conv-id');
+
+            expect(result).toEqual(members);
+            expect(mockMemberRepository.find).toHaveBeenCalledWith({
+                where: { conversationId: 'conv-id', isActive: true },
+            });
+        });
+    });
+
+    describe('isUserMember', () => {
+        it('should alias isMember', async () => {
+            mockMemberRepository.count.mockResolvedValue(1);
+            const result = await service.isUserMember('conv-id', 'user-1');
+            expect(result).toBe(true);
+        });
+    });
+
+    describe('listUserConversations with pagination', () => {
+        it('should apply pagination options', async () => {
+            mockQueryBuilder.getMany.mockResolvedValue([]);
+
+            await service.listUserConversations('user-1', { offset: 10, limit: 20 });
+
+            expect(mockQueryBuilder.skip).toHaveBeenCalledWith(10);
+            expect(mockQueryBuilder.take).toHaveBeenCalledWith(20);
+        });
+    });
 });
+

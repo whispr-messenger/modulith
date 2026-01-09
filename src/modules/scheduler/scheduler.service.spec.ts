@@ -316,5 +316,144 @@ describe('SchedulerService', () => {
             expect(executionRepository.save).toHaveBeenCalled();
             expect(jobRepository.save).toHaveBeenCalled();
         });
+
+        it('should throw NotFoundException if execution not found for complete', async () => {
+            mockExecutionRepository.findOne.mockResolvedValue(null);
+            await expect(service.completeJobExecution('exec-id')).rejects.toThrow('Job execution not found');
+        });
+
+        it('should throw NotFoundException if execution not found for fail', async () => {
+            mockExecutionRepository.findOne.mockResolvedValue(null);
+            await expect(service.failJobExecution('exec-id', 'error')).rejects.toThrow('Job execution not found');
+        });
+    });
+
+    describe('updateJob', () => {
+        it('should update a job', async () => {
+            const job = createMockJob();
+            mockJobRepository.findOne.mockResolvedValue(job);
+
+            const result = await service.updateJob('job-id', { name: 'Updated' });
+
+            expect(result.name).toBe('Updated');
+            expect(jobRepository.save).toHaveBeenCalled();
+        });
+
+        it('should throw NotFoundException if job not found', async () => {
+            mockJobRepository.findOne.mockResolvedValue(null);
+            await expect(service.updateJob('job-id', { name: 'X' })).rejects.toThrow('Job not found');
+        });
+    });
+
+    describe('resumeJob (edge cases)', () => {
+        it('should return job unchanged if not paused', async () => {
+            const job = createMockJob({ status: JobStatus.PENDING });
+            mockJobRepository.findOne.mockResolvedValue(job);
+
+            const result = await service.resumeJob('job-id');
+
+            expect(result.status).toBe(JobStatus.PENDING);
+            expect(mockQueue.resume).not.toHaveBeenCalled();
+        });
+
+        it('should throw NotFoundException if job not found', async () => {
+            mockJobRepository.findOne.mockResolvedValue(null);
+            await expect(service.resumeJob('job-id')).rejects.toThrow('Job not found');
+        });
+    });
+
+    describe('pauseJob (edge cases)', () => {
+        it('should throw NotFoundException if job not found', async () => {
+            mockJobRepository.findOne.mockResolvedValue(null);
+            await expect(service.pauseJob('job-id')).rejects.toThrow('Job not found');
+        });
+    });
+
+    describe('cancelJob (edge cases)', () => {
+        it('should throw NotFoundException if job not found', async () => {
+            mockJobRepository.findOne.mockResolvedValue(null);
+            await expect(service.cancelJob('job-id')).rejects.toThrow('Job not found');
+        });
+
+        it('should handle queue removal error gracefully', async () => {
+            const job = createMockJob();
+            mockJobRepository.findOne.mockResolvedValue(job);
+            mockQueue.getJob.mockRejectedValue(new Error('Queue error'));
+
+            await service.cancelJob('job-id');
+
+            expect(job.markAsCancelled).toHaveBeenCalled();
+            expect(jobRepository.save).toHaveBeenCalled();
+        });
+    });
+
+    describe('retryJob (edge cases)', () => {
+        it('should throw NotFoundException if job not found', async () => {
+            mockJobRepository.findOne.mockResolvedValue(null);
+            await expect(service.retryJob('job-id')).rejects.toThrow('Job not found');
+        });
+    });
+
+    describe('getJobsByStatus', () => {
+        it('should return jobs by status', async () => {
+            const jobs = [createMockJob(), createMockJob()];
+            mockJobRepository.find.mockResolvedValue(jobs);
+
+            const result = await service.getJobsByStatus(JobStatus.PENDING);
+
+            expect(result).toHaveLength(2);
+            expect(jobRepository.find).toHaveBeenCalledWith(expect.objectContaining({
+                where: { status: JobStatus.PENDING },
+            }));
+        });
+
+        it('should return empty array if no jobs', async () => {
+            mockJobRepository.find.mockResolvedValue([]);
+            const result = await service.getJobsByStatus(JobStatus.COMPLETED);
+            expect(result).toHaveLength(0);
+        });
+    });
+
+    describe('getJobExecutions', () => {
+        it('should return executions for a job', async () => {
+            const executions = [createMockExecution()];
+            mockExecutionRepository.find.mockResolvedValue(executions);
+
+            const result = await service.getJobExecutions('job-id');
+
+            expect(result).toHaveLength(1);
+            expect(executionRepository.find).toHaveBeenCalledWith(expect.objectContaining({
+                where: { jobId: 'job-id' },
+            }));
+        });
+    });
+
+    describe('getJobHistory', () => {
+        it('should return execution history with limit', async () => {
+            const executions = [createMockExecution()];
+            mockExecutionRepository.find.mockResolvedValue(executions);
+
+            const result = await service.getJobHistory('job-id', 10);
+
+            expect(result).toHaveLength(1);
+            expect(executionRepository.find).toHaveBeenCalledWith(expect.objectContaining({
+                where: { jobId: 'job-id' },
+                take: 10,
+            }));
+        });
+    });
+
+    describe('scheduleJob (edge cases)', () => {
+        it('should throw NotFoundException if job not found', async () => {
+            mockJobRepository.findOne.mockResolvedValue(null);
+            await expect(service.scheduleJob('job-id', { cronExpression: '* * * * *', isActive: true })).rejects.toThrow('Job not found');
+        });
+    });
+
+    describe('executeJob (edge cases)', () => {
+        it('should throw NotFoundException if job not found', async () => {
+            mockJobRepository.findOne.mockResolvedValue(null);
+            await expect(service.executeJob('job-id')).rejects.toThrow('Job not found');
+        });
     });
 });
