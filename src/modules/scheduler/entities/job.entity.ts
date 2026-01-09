@@ -77,10 +77,10 @@ export class Job {
   updatedAt: Date;
 
   // Relations
-  @OneToOne(() => Schedule, (schedule) => schedule.job, { cascade: true })
+  @OneToOne('Schedule', (schedule) => schedule.job, { cascade: true })
   schedule: Schedule;
 
-  @OneToMany(() => JobExecution, (execution) => execution.job, { cascade: true })
+  @OneToMany('JobExecution', (execution) => execution.job, { cascade: true })
   executions: JobExecution[];
 
   // Helper methods

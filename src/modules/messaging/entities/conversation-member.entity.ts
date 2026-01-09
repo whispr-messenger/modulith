@@ -37,7 +37,7 @@ export class ConversationMember {
     updatedAt: Date;
 
     // Relations
-    @ManyToOne(() => Conversation, (conversation) => conversation.members, { onDelete: 'CASCADE' })
+    @ManyToOne('Conversation', (conversation) => conversation.members, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'conversation_id' })
     conversation: Conversation;
 

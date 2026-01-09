@@ -31,7 +31,7 @@ export class MessageReaction {
     createdAt: Date;
 
     // Relations
-    @ManyToOne(() => Message, (message) => message.reactions, { onDelete: 'CASCADE' })
+    @ManyToOne('Message', (message) => message.reactions, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'message_id' })
     message: Message;
 }

@@ -67,7 +67,7 @@ export class Schedule {
   updatedAt: Date;
 
   // Relations
-  @OneToOne(() => Job, (job) => job.schedule, { onDelete: 'CASCADE' })
+  @OneToOne('Job', (job) => job.schedule, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'job_id' })
   job: Job;
 

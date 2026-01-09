@@ -74,7 +74,7 @@ export class JobExecution {
   updatedAt: Date;
 
   // Relations
-  @ManyToOne(() => Job, (job) => job.executions, { onDelete: 'CASCADE' })
+  @ManyToOne('Job', (job) => job.executions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'job_id' })
   job: Job;
 

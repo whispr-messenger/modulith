@@ -47,10 +47,10 @@ export class Conversation {
     updatedAt: Date;
 
     // Relations
-    @OneToMany(() => ConversationMember, (member) => member.conversation, { cascade: true })
+    @OneToMany('ConversationMember', (member) => member.conversation, { cascade: true })
     members: ConversationMember[];
 
-    @OneToMany(() => Message, (message) => message.conversation, { cascade: true })
+    @OneToMany('Message', (message) => message.conversation, { cascade: true })
     messages: Message[];
 
     // Helper methods

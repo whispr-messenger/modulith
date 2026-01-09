@@ -75,18 +75,18 @@ export class Message {
     updatedAt: Date;
 
     // Relations
-    @ManyToOne(() => Conversation, (conversation) => conversation.messages, { onDelete: 'CASCADE' })
+    @ManyToOne('Conversation', (conversation) => conversation.messages, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'conversation_id' })
     conversation: Conversation;
 
-    @ManyToOne(() => Message, { nullable: true })
+    @ManyToOne('Message', { nullable: true })
     @JoinColumn({ name: 'reply_to_id' })
     replyTo: Message | null;
 
-    @OneToMany(() => DeliveryStatus, (status) => status.message, { cascade: true })
+    @OneToMany('DeliveryStatus', (status) => status.message, { cascade: true })
     deliveryStatuses: DeliveryStatus[];
 
-    @OneToMany(() => MessageReaction, (reaction) => reaction.message, { cascade: true })
+    @OneToMany('MessageReaction', (reaction) => reaction.message, { cascade: true })
     reactions: MessageReaction[];
 
     // Helper methods

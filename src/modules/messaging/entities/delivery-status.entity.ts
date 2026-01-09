@@ -39,7 +39,7 @@ export class DeliveryStatus {
     updatedAt: Date;
 
     // Relations
-    @ManyToOne(() => Message, (message) => message.deliveryStatuses, { onDelete: 'CASCADE' })
+    @ManyToOne('Message', (message) => message.deliveryStatuses, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'message_id' })
     message: Message;
 
