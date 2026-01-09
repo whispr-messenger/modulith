@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { Message } from './message.entity';
 
-@Entity('message_reactions')
+@Entity('message_reactions', { schema: 'messaging' })
 @Unique(['messageId', 'userId', 'reaction'])
 @Index(['messageId'])
 export class MessageReaction {

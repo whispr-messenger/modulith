@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 import { Message } from './message.entity';
 
-@Entity('delivery_statuses')
+@Entity('delivery_statuses', { schema: 'messaging' })
 @Unique(['messageId', 'userId'])
 @Index(['userId', 'deliveredAt'])
 @Index(['messageId'])

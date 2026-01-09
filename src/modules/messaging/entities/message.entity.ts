@@ -20,7 +20,7 @@ export enum MessageType {
     NOTIFICATION = 'notification',
 }
 
-@Entity('messages')
+@Entity('messages', { schema: 'messaging' })
 @Index(['conversationId', 'sentAt'])
 @Index(['senderId'])
 @Index(['sentAt'])

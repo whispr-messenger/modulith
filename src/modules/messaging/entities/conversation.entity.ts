@@ -15,7 +15,7 @@ export enum ConversationType {
     GROUP = 'group',
 }
 
-@Entity('conversations')
+@Entity('conversations', { schema: 'messaging' })
 @Index(['type', 'isActive'])
 @Index(['externalGroupId'])
 @Index(['updatedAt'])

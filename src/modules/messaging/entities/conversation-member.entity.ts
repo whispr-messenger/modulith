@@ -1,17 +1,7 @@
-import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    CreateDateColumn,
-    UpdateDateColumn,
-    ManyToOne,
-    JoinColumn,
-    Index,
-    Unique,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index, Unique, } from 'typeorm';
 import { Conversation } from './conversation.entity';
 
-@Entity('conversation_members')
+@Entity('conversation_members', { schema: 'messaging' })
 @Unique(['conversationId', 'userId'])
 @Index(['userId', 'isActive'])
 @Index(['conversationId', 'isActive'])
