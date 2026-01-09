@@ -13,7 +13,7 @@ GRANT ALL PRIVILEGES ON DATABASE development TO dev_user;
 GRANT ALL PRIVILEGES ON DATABASE testing TO dev_user;
 
 -- Connect to development database
-\ c development;
+\c development;
 
 -- Create auth schema for development and e2e tests
 CREATE SCHEMA IF NOT EXISTS auth;
@@ -48,7 +48,7 @@ GRANT CREATE ON SCHEMA public TO dev_user;
 GRANT USAGE ON SCHEMA public TO dev_user;
 
 -- Connect to testing database and create schemas
-\ c testing;
+\c testing;
 
 CREATE SCHEMA IF NOT EXISTS auth;
 
