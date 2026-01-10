@@ -9,14 +9,12 @@ import {
 	VerificationLoginResponseDto
 } from '../../dto';
 import { UserAuthService } from '../../../common/services/user-auth.service';
-import { VerificationCode } from '../../types/verification-code.interface';
-import { VerificationPurpose } from '../../types/verification-purpose.type';
-import { VerificationCreationResult } from '../../types/verification-creation-result.type';
 import { VerificationCodeGeneratorService } from '../verification-code-generator/verification-code-generator.service';
 import { PhoneNumberService } from '../phone-number/phone-number.service';
 import { RateLimitService } from '../rate-limit/rate-limit.service';
 import type { VerificationRepository } from '../../repositories/verification.repository';
 import type { VerificationChannelStrategy } from '../../strategies/verification-channel.strategy';
+import { VerificationPurpose, VerificationCode, VerificationCreationResult } from '../../types';
 
 /**
  * Service responsible for phone verification workflow orchestration.
@@ -97,7 +95,7 @@ export class PhoneVerificationService {
 		const verificationId = uuidv4();
 		const code = this.codeGenerator.generateCode();
 		const hashedCode = await this.codeGenerator.hashCode(code);
-		const expirationTime =  Date.now() + this.VERIFICATION_TTL * 1000;
+		const expirationTime = Date.now() + this.VERIFICATION_TTL * 1000;
 
 		const verificationData: VerificationCode = {
 			phoneNumber,
@@ -191,10 +189,7 @@ export class PhoneVerificationService {
 	 * @param verificationId - The verification ID
 	 * @param verificationData - The verification data to mark as verified
 	 */
-	private async markVerificationAsConfirmed(
-		verificationId: string,
-		verificationData: VerificationCode
-	): Promise<void> {
+	private async markVerificationAsConfirmed(verificationId: string, verificationData: VerificationCode): Promise<void> {
 		verificationData.verified = true;
 		await this.verificationRepo.update(
 			verificationId,

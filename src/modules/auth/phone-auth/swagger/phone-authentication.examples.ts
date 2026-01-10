@@ -3,8 +3,6 @@ export const REGISTER_EXAMPLES = {
 		summary: 'Complete registration with Signal protocol keys',
 		value: {
 			verificationId: '550e8400-e29b-41d4-a716-446655440000',
-			firstName: 'John',
-			lastName: 'Doe',
 			deviceName: 'iPhone 15 Pro',
 			deviceType: 'mobile',
 			signalKeyBundle: {
@@ -26,17 +24,13 @@ export const REGISTER_EXAMPLES = {
 	example2: {
 		summary: 'Minimal registration (web client without E2E)',
 		value: {
-			verificationId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-			firstName: 'Alice',
-			lastName: 'Smith'
+			verificationId: '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
 		}
 	},
 	example3: {
 		summary: 'Registration with desktop device',
 		value: {
 			verificationId: '7c9e6679-7425-40de-944b-e07fc1f90ae7',
-			firstName: 'Bob',
-			lastName: 'Johnson',
 			deviceName: 'MacBook Pro',
 			deviceType: 'desktop',
 			signalKeyBundle: {

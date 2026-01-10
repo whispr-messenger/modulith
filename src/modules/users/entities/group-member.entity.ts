@@ -8,8 +8,8 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { User } from './user.entity';
-import { Group } from './group.entity';
+import type { User } from './user.entity';
+import type { Group } from './group.entity';
 
 export enum GroupRole {
   ADMIN = 'admin',
@@ -17,7 +17,7 @@ export enum GroupRole {
   MEMBER = 'member',
 }
 
-@Entity({ name: 'group_members', schema: 'groups' })
+@Entity({ name: 'group_members', schema: 'users' })
 @Index(['groupId', 'userId'], { unique: true })
 export class GroupMember {
   @PrimaryGeneratedColumn('uuid')
@@ -45,11 +45,11 @@ export class GroupMember {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => Group, (group) => group.members)
+  @ManyToOne(() => require('./group.entity').Group, (group: Group) => group.members)
   @JoinColumn({ name: 'groupId' })
   group: Group;
 
-  @ManyToOne(() => User, (user) => user.groupMemberships)
+  @ManyToOne(() => require('./user.entity').User, (user: User) => user.groupMemberships)
   @JoinColumn({ name: 'userId' })
   user: User;
 }

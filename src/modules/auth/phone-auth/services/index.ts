@@ -1,2 +1,2 @@
 export * from './phone-authentication.service';
-export * from './notification.service';
+export * from '../../notifications/notification.service';

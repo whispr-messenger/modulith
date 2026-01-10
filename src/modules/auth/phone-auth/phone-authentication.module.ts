@@ -5,14 +5,11 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
 import { PhoneAuthenticationController } from './controllers/phone-authentication.controller';
-import { PhoneAuthenticationService, NotificationService } from './services';
-
+import { PhoneAuthenticationService } from './services';
 import { jwtModuleOptionsFactory } from './config/jwt.config';
-
 import { TokensModule } from '../tokens/tokens.module';
 import { DevicesModule } from '../devices/devices.module';
 import { PhoneVerificationModule } from '../phone-verification/phone-verification.module';
-import { UserAuthService } from '../common/services/user-auth.service';
 import { CommonModule } from '../common/common.module';
 import { TwoFactorAuthenticationModule } from '../two-factor-authentication/two-factor-authentication.module';
 

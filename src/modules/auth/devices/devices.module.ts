@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DevicesController } from './controllers/devices.controller';
-import { DevicesService } from './services/devices.service';
-import { DeviceRegistrationService } from './services/device-registration.service';
-import { DeviceActivityService } from './services/device-activity.service';
-import { DeviceStatsService } from './services/device-stats.service';
-import { DeviceRepository } from './repositories/device.repository';
-import { QuickResponseCodeService } from './quick-response-code/quick-response-code.service';
-import { QuickResponseCodeController } from './quick-response-code/quick-response-code.controller';
-import { TokensModule } from '../tokens/tokens.module';
+// QR Codes
+import { QuickResponseCodeService } from './quick-response-code/services';
+import { QuickResponseCodeController } from './quick-response-code/controller/quick-response-code.controller';
+// Devices
 import { Device } from './entities/device.entity';
+import { DeviceRepository } from './repositories/device.repository';
+import { DeviceRegistrationService, DeviceActivityService, DeviceStatsService, DeviceFingerprintService, DevicesService } from './services';
+import { DevicesController } from './controllers/devices.controller';
+// Others
+import { TokensModule } from '../tokens/tokens.module';
 import { UserAuth } from '../common/entities/user-auth.entity';
 
 @Module({
@@ -18,6 +18,7 @@ import { UserAuth } from '../common/entities/user-auth.entity';
 		DeviceRegistrationService,
 		DeviceActivityService,
 		DeviceStatsService,
+		DeviceFingerprintService,
 		DeviceRepository,
 		QuickResponseCodeService,
 	],
@@ -28,6 +29,7 @@ import { UserAuth } from '../common/entities/user-auth.entity';
 		DeviceRegistrationService,
 		DeviceActivityService,
 		DeviceStatsService,
+		DeviceFingerprintService,
 		QuickResponseCodeService,
 	],
 })

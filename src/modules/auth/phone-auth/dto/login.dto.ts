@@ -1,8 +1,9 @@
 import { IsUUID, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { SignalKeyBundleDto } from './signal-keys.dto';
+import { DeviceInfo } from '../interfaces/device-info.interface';
 
-export class LoginDto {
+export class LoginDto implements DeviceInfo {
     @IsUUID()
     verificationId: string;
 

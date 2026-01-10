@@ -1,14 +1,22 @@
 import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
+// UserAuth
 import { UserAuthService } from '../../common/services/user-auth.service';
 import { UserAuth } from '../../common/entities/user-auth.entity';
-import { DeviceRegistrationService } from '../../devices/services/device-registration.service';
-import { DeviceActivityService } from '../../devices/services/device-activity.service';
+// Devices
+import { DeviceRegistrationService } from '../../devices/services/device-registration/device-registration.service';
+import { DeviceActivityService } from '../../devices/services/device-activity/device-activity.service';
 import { DeviceFingerprint } from '../../devices/types/device-fingerprint.interface';
+// Tokens
 import { TokenPair } from '../../tokens/types/token-pair.interface';
-import { PhoneVerificationService } from '../../phone-verification/services/phone-verification/phone-verification.service';
 import { TokensService } from '../../tokens/services/tokens.service';
+// Phone Verification
+import { PhoneVerificationService } from '../../phone-verification/services';
+// DTOs
 import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
+import { VerificationPurpose } from '../../phone-verification/types/verification-purpose.type';
+// Interfaces
+import { DeviceInfo } from '../interfaces/device-info.interface';
 
 @Injectable()
 export class PhoneAuthenticationService {
@@ -21,41 +29,38 @@ export class PhoneAuthenticationService {
 		private readonly userAuthService: UserAuthService,
 	) { }
 
+	private getWrongPurposeMessage(purpose: VerificationPurpose): string {
+		return purpose === 'registration'
+			? 'Invalid verification code for registration'
+			: 'Invalid verification code for login';
+	}
+
 	/**
 	 * Verifies the phone verification has been confirmed for a specific purpose
 	 * @returns The verified phone number
 	 */
-	private async verifyPhoneNumberForPurpose(
-		verificationId: string,
-		purpose: 'registration' | 'login'
-	): Promise<string> {
+	private async verifyPhoneNumberForPurpose(verificationId: string, purpose: VerificationPurpose): Promise<string> {
 		const verificationData = await this.phoneVerificationService.getConfirmedVerification(verificationId);
 
 		if (verificationData.purpose !== purpose) {
-			const message = purpose === 'registration'
-				? 'Invalid verification code for registration'
-				: 'Invalid verification code for login';
-			throw new BadRequestException(message);
+			const message = this.getWrongPurposeMessage(purpose);
+			throw new BadRequestException();
 		}
 
 		return verificationData.phoneNumber;
 	}
 
 	/**
-	 * Handles device registration or returns a web session ID
-	 * @returns The created device ID or 'web-session'
+	 * Registers a device if complete device information is provided, otherwise returns a web session ID
+	 * @returns The created device ID if device info is complete, or 'web-session' for web-only authentication
 	 */
-	private async handleDeviceRegistration(
-		userId: string,
-		dto: { deviceName?: string; deviceType?: string; publicKey?: string },
-		fingerprint: DeviceFingerprint
-	): Promise<string> {
-		if (dto.deviceName && dto.deviceType && dto.publicKey) {
+	private async handleDeviceRegistration(userId: string, deviceInfo: DeviceInfo, fingerprint: DeviceFingerprint): Promise<string> {
+		if (deviceInfo.deviceName && deviceInfo.deviceType && deviceInfo.signalKeyBundle) {
 			const device = await this.deviceRegistrationService.registerDevice({
 				userId,
-				deviceName: dto.deviceName,
-				deviceType: dto.deviceType,
-				publicKey: dto.publicKey,
+				deviceName: deviceInfo.deviceName,
+				deviceType: deviceInfo.deviceType,
+				publicKey: deviceInfo.signalKeyBundle.identityKey,
 				ipAddress: fingerprint.ipAddress,
 			});
 			return device.id;
@@ -67,39 +72,51 @@ export class PhoneAuthenticationService {
 	 * Finalizes the authentication session by updating the user,
 	 * consuming the verification and generating tokens
 	 */
-	private async createAuthSession(
-		user: UserAuth,
-		deviceId: string,
-		fingerprint: DeviceFingerprint,
-		verificationId: string
-	): Promise<TokenPair> {
+	private async createAuthSession(user: UserAuth, deviceId: string, fingerprint: DeviceFingerprint, verificationId: string): Promise<TokenPair> {
 		user.lastAuthenticatedAt = new Date();
 		await this.userAuthService.saveUser(user);
 		await this.phoneVerificationService.consumeVerification(verificationId);
 		return this.tokenService.generateTokenPair(user.id, deviceId, fingerprint);
 	}
 
-	async register(dto: RegisterDto, fingerprint: DeviceFingerprint): Promise<TokenPair> {
-		const phoneNumber = await this.verifyPhoneNumberForPurpose(dto.verificationId, 'registration');
+	/**
+	 * Validates that the phone number is verified and available for registration
+	 * @returns The verified phone number
+	 */
+	private async validatePhoneNumberAvailability(verificationId: string): Promise<string> {
+		const phoneNumber = await this.verifyPhoneNumberForPurpose(verificationId, 'registration');
 
 		const existingUser = await this.userAuthService.findByPhoneNumber(phoneNumber);
 		if (existingUser) {
 			throw new ConflictException('An account already exists with this phone number');
 		}
 
+		return phoneNumber;
+	}
+
+	/**
+	 * Creates and saves a new user with the given phone number
+	 * @returns The saved user entity
+	 */
+	private async createAndSaveUser(phoneNumber: string): Promise<UserAuth> {
 		const user = this.userAuthService.createUser({
 			phoneNumber,
 			twoFactorEnabled: false,
 			lastAuthenticatedAt: new Date(),
 		});
-		const savedUser = await this.userAuthService.saveUser(user);
 
+		return this.userAuthService.saveUser(user);
+	}
+
+	public async register(dto: RegisterDto, fingerprint: DeviceFingerprint): Promise<TokenPair> {
+		const phoneNumber = await this.validatePhoneNumberAvailability(dto.verificationId);
+		const savedUser = await this.createAndSaveUser(phoneNumber);
 		const deviceId = await this.handleDeviceRegistration(savedUser.id, dto, fingerprint);
 
 		return this.createAuthSession(savedUser, deviceId, fingerprint, dto.verificationId);
 	}
 
-	async login(dto: LoginDto, fingerprint: DeviceFingerprint): Promise<TokenPair> {
+	public async login(dto: LoginDto, fingerprint: DeviceFingerprint): Promise<TokenPair> {
 		const phoneNumber = await this.verifyPhoneNumberForPurpose(dto.verificationId, 'login');
 
 		const user = await this.userAuthService.findByPhoneNumber(phoneNumber);
@@ -112,7 +129,7 @@ export class PhoneAuthenticationService {
 		return this.createAuthSession(user, deviceId, fingerprint, dto.verificationId);
 	}
 
-	async logout(userId: string, deviceId: string): Promise<void> {
+	public async logout(userId: string, deviceId: string): Promise<void> {
 		await this.tokenService.revokeAllTokensForDevice(deviceId);
 
 		if (deviceId !== 'web-session') {

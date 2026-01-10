@@ -8,12 +8,12 @@ import {
   OneToMany,
   Index,
 } from 'typeorm';
-import { PrivacySettings } from './privacy-settings.entity';
-import { Contact } from './contact.entity';
-import { BlockedUser } from './blocked-user.entity';
-import { Group } from './group.entity';
-import { GroupMember } from './group-member.entity';
-import { UserSearchIndex } from './user-search-index.entity';
+import type { PrivacySettings } from './privacy-settings.entity';
+import type { Contact } from './contact.entity';
+import type { BlockedUser } from './blocked-user.entity';
+import type { Group } from './group.entity';
+import type { GroupMember } from './group-member.entity';
+import type { UserSearchIndex } from './user-search-index.entity';
 
 @Entity({ name: 'users', schema: 'users' })
 export class User {
@@ -50,30 +50,34 @@ export class User {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToOne(() => PrivacySettings, (privacySettings) => privacySettings.user, {
-    cascade: true,
-  })
+  @OneToOne(
+    () => require('./privacy-settings.entity').PrivacySettings,
+    (privacySettings: PrivacySettings) => privacySettings.user,
+    {
+      cascade: true,
+    },
+  )
   privacySettings: PrivacySettings;
 
-  @OneToMany(() => Contact, (contact) => contact.user)
+  @OneToMany(() => require('./contact.entity').Contact, (contact: Contact) => contact.user)
   contacts: Contact[];
 
-  @OneToMany(() => Contact, (contact) => contact.contactUser)
+  @OneToMany(() => require('./contact.entity').Contact, (contact: Contact) => contact.contactUser)
   contactedBy: Contact[];
 
-  @OneToMany(() => BlockedUser, (blockedUser) => blockedUser.user)
+  @OneToMany(() => require('./blocked-user.entity').BlockedUser, (blockedUser: BlockedUser) => blockedUser.user)
   blockedUsers: BlockedUser[];
 
-  @OneToMany(() => BlockedUser, (blockedUser) => blockedUser.blockedUser)
+  @OneToMany(() => require('./blocked-user.entity').BlockedUser, (blockedUser: BlockedUser) => blockedUser.blockedUser)
   blockedBy: BlockedUser[];
 
-  @OneToMany(() => Group, (group) => group.createdBy)
+  @OneToMany(() => require('./group.entity').Group, (group: Group) => group.createdBy)
   createdGroups: Group[];
 
-  @OneToMany(() => GroupMember, (groupMember) => groupMember.user)
+  @OneToMany(() => require('./group-member.entity').GroupMember, (groupMember: GroupMember) => groupMember.user)
   groupMemberships: GroupMember[];
 
-  @OneToOne(() => UserSearchIndex, (searchIndex) => searchIndex.user, {
+  @OneToOne(() => require('./user-search-index.entity').UserSearchIndex, (searchIndex: UserSearchIndex) => searchIndex.user, {
     cascade: true,
   })
   searchIndex: UserSearchIndex;

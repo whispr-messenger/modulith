@@ -6,9 +6,9 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { User } from './user.entity';
+import type { User } from './user.entity';
 
-@Entity({ name: 'user_search_index', schema: 'search' })
+@Entity({ name: 'user_search_index', schema: 'users' })
 export class UserSearchIndex {
   @PrimaryColumn('uuid')
   userId: string;
@@ -29,7 +29,7 @@ export class UserSearchIndex {
   @Index()
   lastNameNormalized: string;
 
-  @OneToOne(() => User, (user) => user.searchIndex)
+  @OneToOne(() => require('./user.entity').User, (user: User) => user.searchIndex)
   @JoinColumn({ name: 'userId' })
   user: User;
 }

@@ -8,10 +8,10 @@ import {
   OneToMany,
   JoinColumn,
 } from 'typeorm';
-import { User } from './user.entity';
-import { GroupMember } from './group-member.entity';
+import type { User } from './user.entity';
+import type { GroupMember } from './group-member.entity';
 
-@Entity({ name: 'groups', schema: 'groups' })
+@Entity({ name: 'groups', schema: 'users' })
 export class Group {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -37,10 +37,10 @@ export class Group {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => User, (user) => user.createdGroups)
+  @ManyToOne(() => require('./user.entity').User, (user: User) => user.createdGroups)
   @JoinColumn({ name: 'createdById' })
   createdBy: User;
 
-  @OneToMany(() => GroupMember, (groupMember) => groupMember.group)
+  @OneToMany(() => require('./group-member.entity').GroupMember, (groupMember: GroupMember) => groupMember.group)
   members: GroupMember[];
 }

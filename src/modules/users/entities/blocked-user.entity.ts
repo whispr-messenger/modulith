@@ -7,9 +7,9 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { User } from './user.entity';
+import type { User } from './user.entity';
 
-@Entity({ name: 'blocked_users', schema: 'blocked_users' })
+@Entity({ name: 'blocked_users', schema: 'users' })
 @Index(['userId', 'blockedUserId'], { unique: true })
 export class BlockedUser {
   @PrimaryGeneratedColumn('uuid')
@@ -27,11 +27,11 @@ export class BlockedUser {
   @CreateDateColumn()
   blockedAt: Date;
 
-  @ManyToOne(() => User, (user) => user.blockedUsers)
+  @ManyToOne(() => require('./user.entity').User, (user: User) => user.blockedUsers)
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => User, (user) => user.blockedBy)
+  @ManyToOne(() => require('./user.entity').User, (user: User) => user.blockedBy)
   @JoinColumn({ name: 'blockedUserId' })
   blockedUser: User;
 }

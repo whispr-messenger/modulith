@@ -2,14 +2,18 @@ import { Controller, Post, Body, UseGuards, Request, HttpCode, HttpStatus } from
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { PhoneAuthenticationService } from '../services/phone-authentication.service';
 import { JwtAuthGuard } from '../../tokens/guards';
-import { DeviceFingerprint } from '../../devices/types/device-fingerprint.interface';
+import { DeviceFingerprintService } from '../../devices/services/device-fingerprint/device-fingerprint.service';
 import { RegisterDto, LoginDto, LogoutDto, RegisterResponseDto, LoginResponseDto } from '../dto';
 import { REGISTER_EXAMPLES, LOGIN_EXAMPLES, LOGOUT_EXAMPLES } from '../swagger/phone-authentication.examples';
 
-@ApiTags('Authentication')
+@ApiTags('Phone Authentication')
 @Controller()
 export class PhoneAuthenticationController {
-	constructor(private readonly authService: PhoneAuthenticationService) {}
+
+	constructor(
+		private readonly authService: PhoneAuthenticationService,
+		private readonly fingerprintService: DeviceFingerprintService,
+	) { }
 
 	@Post('register')
 	@HttpCode(HttpStatus.CREATED)
@@ -19,13 +23,7 @@ export class PhoneAuthenticationController {
 	@ApiResponse({ status: 409, description: 'User already exists' })
 	@ApiBody({ type: RegisterDto, examples: REGISTER_EXAMPLES, })
 	async register(@Body() dto: RegisterDto, @Request() req: any): Promise<RegisterResponseDto> {
-		const fingerprint: DeviceFingerprint = {
-			userAgent: req.headers['user-agent'],
-			ipAddress: req.ip,
-			deviceType: dto.deviceType,
-			timestamp: Date.now(),
-		};
-
+		const fingerprint = this.fingerprintService.extractFingerprint(req, dto.deviceType);
 		return this.authService.register(dto, fingerprint);
 	}
 
@@ -44,13 +42,7 @@ export class PhoneAuthenticationController {
 		examples: LOGIN_EXAMPLES,
 	})
 	async login(@Body() dto: LoginDto, @Request() req: any): Promise<LoginResponseDto> {
-		const fingerprint: DeviceFingerprint = {
-			userAgent: req.headers['user-agent'],
-			ipAddress: req.ip,
-			deviceType: dto.deviceType,
-			timestamp: Date.now(),
-		};
-
+		const fingerprint = this.fingerprintService.extractFingerprint(req, dto.deviceType);
 		return this.authService.login(dto, fingerprint);
 	}
 

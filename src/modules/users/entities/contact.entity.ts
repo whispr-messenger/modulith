@@ -8,9 +8,9 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { User } from './user.entity';
+import type { User } from './user.entity';
 
-@Entity({ name: 'contacts', schema: 'contacts' })
+@Entity({ name: 'contacts', schema: 'users' })
 @Index(['userId', 'contactId'], { unique: true })
 export class Contact {
   @PrimaryGeneratedColumn('uuid')
@@ -34,11 +34,11 @@ export class Contact {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => User, (user) => user.contacts)
+  @ManyToOne(() => require('./user.entity').User, (user: User) => user.contacts)
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => User, (user) => user.contactedBy)
+  @ManyToOne(() => require('./user.entity').User, (user: User) => user.contactedBy)
   @JoinColumn({ name: 'contactId' })
   contactUser: User;
 }
