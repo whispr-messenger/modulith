@@ -9,6 +9,7 @@ import {
 	Unique,
 } from 'typeorm';
 import { UserAuth } from '../../common/entities/user-auth.entity';
+import { Device } from '../../devices/entities/device.entity';
 
 @Entity({ name: 'prekeys', schema: 'auth' })
 @Index(['userId', 'deviceId'])
@@ -42,4 +43,8 @@ export class PreKey {
 	@ManyToOne(() => UserAuth, { onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'user_id' })
 	user: UserAuth;
+
+	@ManyToOne(() => Device, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'device_id' })
+	device: Device;
 }

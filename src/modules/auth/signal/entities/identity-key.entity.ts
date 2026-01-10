@@ -25,9 +25,6 @@ export class IdentityKey {
 	@Column({ name: 'public_key', type: 'text' })
 	publicKey: string;
 
-	@Column({ name: 'private_key_encrypted', type: 'text', nullable: true })
-	privateKeyEncrypted: string;
-
 	@CreateDateColumn({ name: 'created_at' })
 	createdAt: Date;
 
