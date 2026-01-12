@@ -8,7 +8,7 @@ import { CREATE_CONVERSATION_EXAMPLES, ADD_MEMBER_EXAMPLES, UPDATE_MEMBER_SETTIN
 
 @ApiTags('Conversations')
 @ApiBearerAuth()
-@Controller('conversations')
+@Controller('conversation')
 // @UseGuards(JwtAuthGuard) // TODO: Enable when auth is integrated
 export class ConversationsController {
     constructor(private readonly conversationsService: ConversationsService) { }

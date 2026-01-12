@@ -5,9 +5,9 @@ import { User } from '../entities';
 export interface SearchIndexEntry {
   userId: string;
   phoneNumber: string;
-  username: string;
-  firstName: string;
-  lastName: string;
+  username: string | null;
+  firstName: string | null;
+  lastName: string | null;
   fullName: string;
   isActive: boolean;
   createdAt: Date;
@@ -29,13 +29,17 @@ export class SearchIndexService {
    */
   async indexUser(user: User): Promise<void> {
     try {
+      const fullName = user.firstName && user.lastName
+        ? `${user.firstName} ${user.lastName}`.toLowerCase().trim()
+        : user.firstName?.toLowerCase() || user.lastName?.toLowerCase() || '';
+
       const indexEntry: SearchIndexEntry = {
         userId: user.id,
         phoneNumber: user.phoneNumber,
         username: user.username,
         firstName: user.firstName,
         lastName: user.lastName,
-        fullName: `${user.firstName} ${user.lastName}`.toLowerCase().trim(),
+        fullName,
         isActive: user.isActive,
         createdAt: user.createdAt,
       };
@@ -44,38 +48,53 @@ export class SearchIndexService {
       const commands: Array<[string, ...any[]]> = [
         // Phone number index (hash: phone -> userId)
         ['hset', this.PHONE_INDEX_KEY, user.phoneNumber, user.id],
+      ];
 
-        // Username index (hash: username -> userId)
-        ['hset', this.USERNAME_INDEX_KEY, user.username.toLowerCase(), user.id],
+      // Only index username if it exists
+      if (user.username) {
+        commands.push([
+          'hset',
+          this.USERNAME_INDEX_KEY,
+          user.username.toLowerCase(),
+          user.id,
+        ]);
+      }
 
-        // Name search index (sorted set: score based on creation time)
-        [
+      // Only index names if they exist
+      if (user.firstName) {
+        commands.push([
           'zadd',
           `${this.NAME_INDEX_KEY}:${user.firstName.toLowerCase()}`,
           user.createdAt.getTime(),
           user.id,
-        ],
-        [
+        ]);
+      }
+
+      if (user.lastName) {
+        commands.push([
           'zadd',
           `${this.NAME_INDEX_KEY}:${user.lastName.toLowerCase()}`,
           user.createdAt.getTime(),
           user.id,
-        ],
-        [
+        ]);
+      }
+
+      if (fullName) {
+        commands.push([
           'zadd',
-          `${this.NAME_INDEX_KEY}:${indexEntry.fullName}`,
+          `${this.NAME_INDEX_KEY}:${fullName}`,
           user.createdAt.getTime(),
           user.id,
-        ],
+        ]);
+      }
 
-        // Cache user data
-        [
-          'setex',
-          `${this.USER_CACHE_PREFIX}:${user.id}`,
-          this.CACHE_TTL,
-          JSON.stringify(indexEntry),
-        ],
-      ];
+      // Cache user data
+      commands.push([
+        'setex',
+        `${this.USER_CACHE_PREFIX}:${user.id}`,
+        this.CACHE_TTL,
+        JSON.stringify(indexEntry),
+      ]);
 
       await this.cacheService.pipeline(commands);
 
@@ -91,33 +110,47 @@ export class SearchIndexService {
    */
   async removeUserFromIndex(user: User): Promise<void> {
     try {
-      const fullName = `${user.firstName} ${user.lastName}`
-        .toLowerCase()
-        .trim();
+      const fullName = user.firstName && user.lastName
+        ? `${user.firstName} ${user.lastName}`.toLowerCase().trim()
+        : user.firstName?.toLowerCase() || user.lastName?.toLowerCase() || '';
 
       const commands: Array<[string, ...any[]]> = [
         // Remove from phone index
         ['hdel', this.PHONE_INDEX_KEY, user.phoneNumber],
 
-        // Remove from username index
-        ['hdel', this.USERNAME_INDEX_KEY, user.username.toLowerCase()],
-
-        // Remove from name indexes
-        [
-          'zrem',
-          `${this.NAME_INDEX_KEY}:${user.firstName.toLowerCase()}`,
-          user.id,
-        ],
-        [
-          'zrem',
-          `${this.NAME_INDEX_KEY}:${user.lastName.toLowerCase()}`,
-          user.id,
-        ],
-        ['zrem', `${this.NAME_INDEX_KEY}:${fullName}`, user.id],
-
         // Remove from cache
         ['del', `${this.USER_CACHE_PREFIX}:${user.id}`],
       ];
+
+      // Only remove username if it exists
+      if (user.username) {
+        commands.push([
+          'hdel',
+          this.USERNAME_INDEX_KEY,
+          user.username.toLowerCase(),
+        ]);
+      }
+
+      // Only remove names if they exist
+      if (user.firstName) {
+        commands.push([
+          'zrem',
+          `${this.NAME_INDEX_KEY}:${user.firstName.toLowerCase()}`,
+          user.id,
+        ]);
+      }
+
+      if (user.lastName) {
+        commands.push([
+          'zrem',
+          `${this.NAME_INDEX_KEY}:${user.lastName.toLowerCase()}`,
+          user.id,
+        ]);
+      }
+
+      if (fullName) {
+        commands.push(['zrem', `${this.NAME_INDEX_KEY}:${fullName}`, user.id]);
+      }
 
       await this.cacheService.pipeline(commands);
 
@@ -234,50 +267,73 @@ export class SearchIndexService {
       const commands: Array<[string, ...any[]]> = [];
 
       for (const user of users) {
+        const fullName = user.firstName && user.lastName
+          ? `${user.firstName} ${user.lastName}`.toLowerCase().trim()
+          : user.firstName?.toLowerCase() || user.lastName?.toLowerCase() || '';
+
         const indexEntry: SearchIndexEntry = {
           userId: user.id,
           phoneNumber: user.phoneNumber,
           username: user.username,
           firstName: user.firstName,
           lastName: user.lastName,
-          fullName: `${user.firstName} ${user.lastName}`.toLowerCase().trim(),
+          fullName,
           isActive: user.isActive,
           createdAt: user.createdAt,
         };
 
-        commands.push(
-          ['hset', this.PHONE_INDEX_KEY, user.phoneNumber, user.id],
-          [
+        commands.push(['hset', this.PHONE_INDEX_KEY, user.phoneNumber, user.id]);
+
+        if (user.username) {
+          commands.push([
             'hset',
             this.USERNAME_INDEX_KEY,
             user.username.toLowerCase(),
             user.id,
-          ],
-          [
+          ]);
+        }
+
+        if (user.firstName) {
+          commands.push([
             'zadd',
             `${this.NAME_INDEX_KEY}:${user.firstName.toLowerCase()}`,
             user.createdAt.getTime(),
             user.id,
-          ],
-          [
+          ]);
+        }
+
+        if (user.lastName) {
+          commands.push([
             'zadd',
             `${this.NAME_INDEX_KEY}:${user.lastName.toLowerCase()}`,
             user.createdAt.getTime(),
             user.id,
-          ],
-          [
-            'zadd',
-            `${this.NAME_INDEX_KEY}:${indexEntry.fullName}`,
-            user.createdAt.getTime(),
-            user.id,
-          ],
-          [
+          ]);
+        }
+
+        if (fullName) {
+          commands.push(
+            [
+              'zadd',
+              `${this.NAME_INDEX_KEY}:${fullName}`,
+              user.createdAt.getTime(),
+              user.id,
+            ],
+            [
+              'setex',
+              `${this.USER_CACHE_PREFIX}:${user.id}`,
+              this.CACHE_TTL,
+              JSON.stringify(indexEntry),
+            ],
+          );
+        } else {
+          commands.push([
             'setex',
             `${this.USER_CACHE_PREFIX}:${user.id}`,
             this.CACHE_TTL,
             JSON.stringify(indexEntry),
-          ],
-        );
+          ]);
+        }
       }
 
       if (commands.length > 0) {

@@ -2,10 +2,15 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ContactsService } from './contacts.service';
 import { ContactsController } from './contacts.controller';
-import { Contact, User, BlockedUser } from '../../entities';
+import { Contact } from './contact.entity';
+import { BlockedUser } from '../blocked-users/blocked-user.entity';
+import { CommonModule } from '../common/common.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Contact, User, BlockedUser])],
+  imports: [
+    TypeOrmModule.forFeature([Contact, BlockedUser]),
+    CommonModule,
+  ],
   controllers: [ContactsController],
   providers: [ContactsService],
   exports: [ContactsService],

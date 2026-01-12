@@ -1,9 +1,0 @@
-export { CreateUserDto } from './create-user.dto';
-export { UpdateUserDto } from './update-user.dto';
-export { UpdatePrivacySettingsDto } from './update-privacy-settings.dto';
-export { AddContactDto } from './add-contact.dto';
-export { UpdateContactDto } from './update-contact.dto';
-export { BlockUserDto } from './block-user.dto';
-export { CreateGroupDto } from './create-group.dto';
-export { UpdateGroupDto } from './update-group.dto';
-export { AddGroupMemberDto } from './add-group-member.dto';

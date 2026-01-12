@@ -1,11 +1,12 @@
 import { Body, Controller, HttpCode, HttpStatus, Request, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../tokens/guards';
 import { DeviceFingerprintService } from '../../services/device-fingerprint/device-fingerprint.service';
 import { QuickResponseCodeService } from '../services/quick-response-code.service';
 import { ScanLoginDto } from '../dto/scan-login.dto';
 
-@Controller('qr-code')
+@ApiTags('Auth - QR Codes')
+@Controller('auth/qr-code')
 export class QuickResponseCodeController {
 	constructor(
 		private readonly quickResponseCodeService: QuickResponseCodeService,

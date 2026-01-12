@@ -1,38 +1,29 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException, } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BlockedUser, User, Contact } from '../../entities';
-import { BlockUserDto } from '../../dto';
+import { BlockedUser } from './blocked-user.entity';
+import { Contact } from '../contacts/contact.entity';
+import { BlockUserDto } from '../dto';
+import { UserRepository } from '../common/repositories';
 
 @Injectable()
 export class BlockedUsersService {
   constructor(
     @InjectRepository(BlockedUser)
     private readonly blockedUserRepository: Repository<BlockedUser>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly userRepository: UserRepository,
     @InjectRepository(Contact)
     private readonly contactRepository: Repository<Contact>,
   ) { }
 
-  async blockUser(
-    userId: string,
-    blockUserDto: BlockUserDto,
-  ): Promise<BlockedUser> {
+  async blockUser(userId: string, blockUserDto: BlockUserDto): Promise<BlockedUser> {
     // Vérifier que l'utilisateur ne se bloque pas lui-même
     if (userId === blockUserDto.blockedUserId) {
       throw new BadRequestException('Cannot block yourself');
     }
 
     // Vérifier que l'utilisateur à bloquer existe
-    const userToBlock = await this.userRepository.findOne({
-      where: { id: blockUserDto.blockedUserId },
-    });
+    const userToBlock = await this.userRepository.findById(blockUserDto.blockedUserId);
     if (!userToBlock) {
       throw new NotFoundException('User to block not found');
     }
@@ -44,6 +35,7 @@ export class BlockedUsersService {
         blockedUserId: blockUserDto.blockedUserId,
       },
     });
+
     if (existingBlock) {
       throw new ConflictException('User is already blocked');
     }
@@ -67,11 +59,7 @@ export class BlockedUsersService {
     return this.blockedUserRepository.save(blockedUser);
   }
 
-  async getBlockedUsers(
-    userId: string,
-    page: number = 1,
-    limit: number = 10,
-  ): Promise<{ blockedUsers: BlockedUser[]; total: number }> {
+  async getBlockedUsers( userId: string, page: number = 1, limit: number = 10): Promise<{ blockedUsers: BlockedUser[]; total: number }> {
     const [blockedUsers, total] = await this.blockedUserRepository.findAndCount(
       {
         where: { userId },
@@ -85,10 +73,7 @@ export class BlockedUsersService {
     return { blockedUsers, total };
   }
 
-  async getBlockedUser(
-    userId: string,
-    blockedUserId: string,
-  ): Promise<BlockedUser> {
+  async getBlockedUser( userId: string, blockedUserId: string): Promise<BlockedUser> {
     const blockedUser = await this.blockedUserRepository.findOne({
       where: {
         userId,

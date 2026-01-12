@@ -9,12 +9,12 @@ import { SignalModule } from "./signal/signal.module";
 @Module({
     providers: [],
     imports: [
-        SignalModule,
-        PhoneAuthenticationModule,
-        DevicesModule,
         PhoneVerificationModule,
+        PhoneAuthenticationModule,
+        SignalModule,
         TokensModule,
-        TwoFactorAuthenticationModule
+        DevicesModule,
+        // TwoFactorAuthenticationModule
     ],
 })
 export class AuthModule { }

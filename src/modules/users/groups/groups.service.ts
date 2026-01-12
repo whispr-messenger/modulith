@@ -5,11 +5,23 @@ import {
   BadRequestException,
   ForbiddenException,
   ConflictException,
+  Inject,
 } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { Group, GroupMember, User, GroupRole } from '../entities';
-import { CreateGroupDto, UpdateGroupDto, AddGroupMemberDto } from '../dto';
+import { Group } from './group.entity';
+import { GroupMember, GroupRole } from './group-member.entity';
+import { CreateGroupDto } from './create-group.dto';
+import { UpdateGroupDto } from './update-group.dto';
+import { AddGroupMemberDto } from './add-group-member.dto';
+import { UserRepository } from '../common/repositories';
+import {
+  GroupCreatedEvent,
+  GroupUpdatedEvent,
+  GroupMemberAddedEvent,
+  GroupMemberRemovedEvent,
+} from './events';
 
 @Injectable()
 export class GroupsService {
@@ -20,9 +32,10 @@ export class GroupsService {
     private groupRepository: Repository<Group>,
     @InjectRepository(GroupMember)
     private groupMemberRepository: Repository<GroupMember>,
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private userRepository: UserRepository,
     private dataSource: DataSource,
+    @Inject('EVENTS_SERVICE')
+    private readonly eventsClient: ClientProxy,
   ) { }
 
   /**
@@ -38,9 +51,9 @@ export class GroupsService {
 
     try {
       // Verify creator exists
-      const creator = await this.userRepository.findOne({
-        where: { id: creatorId, isActive: true },
-      });
+      const creator = await this.userRepository.findOne(
+        { id: creatorId, isActive: true },
+      );
 
       if (!creator) {
         throw new NotFoundException('Creator not found or inactive');
@@ -64,6 +77,14 @@ export class GroupsService {
       await queryRunner.manager.save(creatorMember);
 
       await queryRunner.commitTransaction();
+
+      // Publish group.created event for projections
+      this.eventsClient.emit('group.created', new GroupCreatedEvent(
+        savedGroup.id,
+        savedGroup.name,
+        savedGroup.pictureUrl,
+        1, // Creator is the first member
+      ));
 
       this.logger.log(`Group ${savedGroup.id} created by user ${creatorId}`);
       return savedGroup;
@@ -160,6 +181,14 @@ export class GroupsService {
     Object.assign(group, updateGroupDto);
     const updatedGroup = await this.groupRepository.save(group);
 
+    // Publish group.updated event for projections
+    this.eventsClient.emit('group.updated', new GroupUpdatedEvent(
+      groupId,
+      updateGroupDto.name,
+      updateGroupDto.pictureUrl,
+      undefined, // isActive not changed here
+    ));
+
     this.logger.log(`Group ${groupId} updated by user ${userId}`);
     return updatedGroup;
   }
@@ -189,9 +218,9 @@ export class GroupsService {
       // adder user not required in this implementation
 
       // Check if user to be added exists
-      const userToAdd = await this.userRepository.findOne({
-        where: { id: addMemberDto.userId, isActive: true },
-      });
+      const userToAdd = await this.userRepository.findOne(
+        { id: addMemberDto.userId, isActive: true },
+      );
 
       if (!userToAdd) {
         throw new NotFoundException('User to add not found or inactive');
@@ -221,6 +250,18 @@ export class GroupsService {
       const savedMember = await this.groupMemberRepository.save(newMember);
 
       await queryRunner.commitTransaction();
+
+      // Count total members for the event
+      const memberCount = await this.groupMemberRepository.count({ 
+        where: { groupId } 
+      });
+
+      // Publish group.member_added event for projections
+      this.eventsClient.emit('group.member_added', new GroupMemberAddedEvent(
+        groupId,
+        addMemberDto.userId,
+        memberCount,
+      ));
 
       this.logger.log(
         `User ${addMemberDto.userId} added to group ${groupId} by ${addedById}`,
@@ -318,6 +359,18 @@ export class GroupsService {
       // Member removed successfully
 
       await queryRunner.commitTransaction();
+
+      // Count remaining members for the event
+      const memberCount = await this.groupMemberRepository.count({ 
+        where: { groupId } 
+      });
+
+      // Publish group.member_removed event for projections
+      this.eventsClient.emit('group.member_removed', new GroupMemberRemovedEvent(
+        groupId,
+        memberId,
+        memberCount,
+      ));
 
       this.logger.log(
         `User ${memberId} removed from group ${groupId} by ${removedById}`,

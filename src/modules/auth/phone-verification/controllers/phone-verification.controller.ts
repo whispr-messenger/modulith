@@ -1,10 +1,11 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { VerificationConfirmDto, VerificationRequestDto, VerificationRequestResponseDto } from '../dto';
 import { PhoneVerificationService } from '../services';
 import { VERIFICATION_CONFIRM_EXAMPLES, VERIFICATION_REQUEST_EXAMPLES } from '../swagger/phone-verification.examples';
 
-@Controller('verify')
+@ApiTags('Auth - Phone Number Verification')
+@Controller('auth/verify')
 export class PhoneVerificationController {
 	constructor(private readonly phoneVerificationService: PhoneVerificationService) {}
 

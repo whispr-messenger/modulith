@@ -1,10 +1,11 @@
 import { Controller, Delete, Get, HttpCode, HttpStatus, Request, Param, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../tokens/guards';
 import { DevicesService } from '../services/devices.service';
 import { DeviceResponseDto } from '../dto';
 
-@Controller('devices')
+@ApiTags('Auth - User Devices')
+@Controller('auth/device')
 export class DevicesController {
 	constructor(private readonly deviceService: DevicesService) { }
 

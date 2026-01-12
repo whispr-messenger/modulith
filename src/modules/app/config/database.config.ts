@@ -104,7 +104,7 @@ export const AppDataSource = new DataSource({
     type: 'postgres',
     ...getDatabaseConfigForCLI(),
     entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
-    migrations: [__dirname + '/../../../migrations/*{.ts,.js}'],
+    migrations: [__dirname + '/../../../database/migrations/*{.ts,.js}'],
     synchronize: false,
     logging: process.env.DB_LOGGING === 'true',
 });

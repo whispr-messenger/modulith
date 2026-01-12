@@ -1,14 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { RedisConfig } from '../config/redis.config';
-import Redis from 'ioredis';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class CacheService {
   private readonly logger = new Logger(CacheService.name);
-  private readonly redis: Redis;
+  private readonly redisClient: any;
 
-  constructor(private redisConfig: RedisConfig) {
-    this.redis = this.redisConfig.getClient();
+  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {
+    // Access the underlying Redis client from the Keyv store
+    const stores = (this.cacheManager as any).store?.stores || [];
+    const keyvStore = stores[0];
+    this.redisClient = keyvStore?.client;
   }
 
   /**
@@ -16,12 +19,7 @@ export class CacheService {
    */
   async set(key: string, value: any, ttl?: number): Promise<void> {
     try {
-      const serializedValue = JSON.stringify(value);
-      if (ttl) {
-        await this.redis.setex(key, ttl, serializedValue);
-      } else {
-        await this.redis.set(key, serializedValue);
-      }
+      await this.cacheManager.set(key, value, ttl ? ttl * 1000 : undefined);
     } catch (error) {
       this.logger.error(`Failed to set cache key ${key}:`, error);
       throw error;
@@ -33,8 +31,7 @@ export class CacheService {
    */
   async get<T>(key: string): Promise<T | null> {
     try {
-      const value = await this.redis.get(key);
-      return value ? JSON.parse(value) : null;
+      return await this.cacheManager.get<T>(key);
     } catch (error) {
       this.logger.error(`Failed to get cache key ${key}:`, error);
       return null;
@@ -46,7 +43,7 @@ export class CacheService {
    */
   async del(key: string): Promise<void> {
     try {
-      await this.redis.del(key);
+      await this.cacheManager.del(key);
     } catch (error) {
       this.logger.error(`Failed to delete cache key ${key}:`, error);
       throw error;
@@ -60,7 +57,7 @@ export class CacheService {
     if (keys.length === 0) return;
 
     try {
-      await this.redis.del(...keys);
+      await Promise.all(keys.map(key => this.cacheManager.del(key)));
     } catch (error) {
       this.logger.error(`Failed to delete cache keys:`, error);
       throw error;
@@ -72,8 +69,8 @@ export class CacheService {
    */
   async exists(key: string): Promise<boolean> {
     try {
-      const result = await this.redis.exists(key);
-      return result === 1;
+      const value = await this.cacheManager.get(key);
+      return value !== undefined && value !== null;
     } catch (error) {
       this.logger.error(
         `Failed to check existence of cache key ${key}:`,
@@ -88,7 +85,11 @@ export class CacheService {
    */
   async expire(key: string, ttl: number): Promise<void> {
     try {
-      await this.redis.expire(key, ttl);
+      // Get the current value and reset it with new TTL
+      const value = await this.cacheManager.get(key);
+      if (value !== undefined && value !== null) {
+        await this.cacheManager.set(key, value, ttl * 1000);
+      }
     } catch (error) {
       this.logger.error(`Failed to set TTL for cache key ${key}:`, error);
       throw error;
@@ -100,7 +101,7 @@ export class CacheService {
    */
   async keys(pattern: string): Promise<string[]> {
     try {
-      return await this.redis.keys(pattern);
+      return await this.redisClient.keys(pattern);
     } catch (error) {
       this.logger.error(`Failed to get keys with pattern ${pattern}:`, error);
       return [];
@@ -112,7 +113,7 @@ export class CacheService {
    */
   async sadd(key: string, ...members: string[]): Promise<number> {
     try {
-      return await this.redis.sadd(key, ...members);
+      return await this.redisClient.sAdd(key, members);
     } catch (error) {
       this.logger.error(`Failed to add to set ${key}:`, error);
       throw error;
@@ -124,7 +125,7 @@ export class CacheService {
    */
   async srem(key: string, ...members: string[]): Promise<number> {
     try {
-      return await this.redis.srem(key, ...members);
+      return await this.redisClient.sRem(key, members);
     } catch (error) {
       this.logger.error(`Failed to remove from set ${key}:`, error);
       throw error;
@@ -136,7 +137,7 @@ export class CacheService {
    */
   async smembers(key: string): Promise<string[]> {
     try {
-      return await this.redis.smembers(key);
+      return await this.redisClient.sMembers(key);
     } catch (error) {
       this.logger.error(`Failed to get members of set ${key}:`, error);
       return [];
@@ -148,8 +149,7 @@ export class CacheService {
    */
   async sismember(key: string, member: string): Promise<boolean> {
     try {
-      const result = await this.redis.sismember(key, member);
-      return result === 1;
+      return await this.redisClient.sIsMember(key, member);
     } catch (error) {
       this.logger.error(`Failed to check membership in set ${key}:`, error);
       return false;
@@ -161,7 +161,7 @@ export class CacheService {
    */
   async zadd(key: string, score: number, member: string): Promise<number> {
     try {
-      return await this.redis.zadd(key, score, member);
+      return await this.redisClient.zAdd(key, { score, value: member });
     } catch (error) {
       this.logger.error(`Failed to add to sorted set ${key}:`, error);
       throw error;
@@ -173,7 +173,7 @@ export class CacheService {
    */
   async zrange(key: string, start: number, stop: number): Promise<string[]> {
     try {
-      return await this.redis.zrange(key, start, stop);
+      return await this.redisClient.zRange(key, start, stop);
     } catch (error) {
       this.logger.error(`Failed to get range from sorted set ${key}:`, error);
       return [];
@@ -185,7 +185,7 @@ export class CacheService {
    */
   async zrem(key: string, ...members: string[]): Promise<number> {
     try {
-      return await this.redis.zrem(key, ...members);
+      return await this.redisClient.zRem(key, members);
     } catch (error) {
       this.logger.error(`Failed to remove from sorted set ${key}:`, error);
       throw error;
@@ -197,7 +197,7 @@ export class CacheService {
    */
   async incr(key: string): Promise<number> {
     try {
-      return await this.redis.incr(key);
+      return await this.redisClient.incr(key);
     } catch (error) {
       this.logger.error(`Failed to increment counter ${key}:`, error);
       throw error;
@@ -209,7 +209,7 @@ export class CacheService {
    */
   async decr(key: string): Promise<number> {
     try {
-      return await this.redis.decr(key);
+      return await this.redisClient.decr(key);
     } catch (error) {
       this.logger.error(`Failed to decrement counter ${key}:`, error);
       throw error;
@@ -221,17 +221,11 @@ export class CacheService {
    */
   async pipeline(commands: Array<[string, ...any[]]>): Promise<any[]> {
     try {
-      const pipeline = this.redis.pipeline();
+      const multi = this.redisClient.multi();
       commands.forEach(([command, ...args]) => {
-        (pipeline as any)[command](...args);
+        multi[command](...args);
       });
-      const results = await pipeline.exec();
-      return (
-        results?.map(([err, result]) => {
-          if (err) throw err;
-          return result;
-        }) || []
-      );
+      return await multi.exec();
     } catch (error) {
       this.logger.error('Failed to execute pipeline:', error);
       throw error;
@@ -243,7 +237,7 @@ export class CacheService {
    */
   async flushall(): Promise<void> {
     try {
-      await this.redis.flushall();
+      await this.redisClient.flushAll();
     } catch (error) {
       this.logger.error('Failed to flush all cache:', error);
       throw error;

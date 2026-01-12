@@ -6,16 +6,17 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Contact, User, BlockedUser } from '../../entities';
-import { AddContactDto, UpdateContactDto } from '../../dto';
+import { Contact } from './contact.entity';
+import { BlockedUser } from '../blocked-users/blocked-user.entity';
+import { AddContactDto, UpdateContactDto } from '../dto';
+import { UserRepository } from '../common/repositories';
 
 @Injectable()
 export class ContactsService {
   constructor(
     @InjectRepository(Contact)
     private readonly contactRepository: Repository<Contact>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private readonly userRepository: UserRepository,
     @InjectRepository(BlockedUser)
     private readonly blockedUserRepository: Repository<BlockedUser>,
   ) { }
@@ -30,9 +31,7 @@ export class ContactsService {
     }
 
     // Vérifier que l'utilisateur cible existe
-    const contactUser = await this.userRepository.findOne({
-      where: { id: addContactDto.contactId },
-    });
+    const contactUser = await this.userRepository.findById(addContactDto.contactId);
     if (!contactUser) {
       throw new NotFoundException('Contact user not found');
     }

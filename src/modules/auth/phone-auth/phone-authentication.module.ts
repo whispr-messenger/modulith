@@ -4,6 +4,7 @@ import { JwtModule, JwtModuleAsyncOptions } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { PhoneAuthenticationController } from './controllers/phone-authentication.controller';
 import { PhoneAuthenticationService } from './services';
 import { jwtModuleOptionsFactory } from './config/jwt.config';
@@ -32,7 +33,7 @@ const throttlerModuleOptions: ThrottlerModuleOptions = [
 ];
 
 @Module({
-	// The providers that will be instantiated bu the Nest injector and that may be shared at least across this module.
+	// The providers that will be instantiated by the Nest injector and that may be shared at least across this module.
 	providers: [PhoneAuthenticationService],
 	// The set of controllers defined in this module which have to be instantiated.
 	controllers: [PhoneAuthenticationController],
@@ -41,6 +42,20 @@ const throttlerModuleOptions: ThrottlerModuleOptions = [
 		JwtModule.registerAsync(jwtModuleAsyncOptions),
 		CacheModule.register(cacheConfig),
 		ThrottlerModule.forRoot(throttlerModuleOptions),
+		ClientsModule.registerAsync([
+			{
+				name: 'REDIS_CLIENT',
+				imports: [ConfigModule],
+				useFactory: (configService: ConfigService) => ({
+					transport: Transport.REDIS,
+					options: {
+						host: configService.get<string>('REDIS_HOST', 'localhost'),
+						port: configService.get<number>('REDIS_PORT', 6379),
+					},
+				}),
+				inject: [ConfigService],
+			},
+		]),
 		CommonModule,
 		DevicesModule,
 		PhoneVerificationModule,

@@ -1,19 +1,5 @@
-import {
-	Controller,
-	Get,
-	Param,
-	NotFoundException,
-	Logger,
-	HttpCode,
-	HttpStatus,
-} from '@nestjs/common';
-import {
-	ApiTags,
-	ApiOperation,
-	ApiResponse,
-	ApiParam,
-	ApiBearerAuth,
-} from '@nestjs/swagger';
+import { Controller, Get, Param, NotFoundException, Logger, HttpCode, HttpStatus, } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth, } from '@nestjs/swagger';
 import { SignalPreKeyBundleService } from '../services';
 import { KeyBundleResponseDto, PreKeyStatusDto } from '../dto';
 

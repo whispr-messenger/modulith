@@ -1,4 +1,5 @@
-import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException, Inject } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 // UserAuth
 import { UserAuthService } from '../../common/services/user-auth.service';
 import { UserAuth } from '../../common/entities/user-auth.entity';
@@ -17,6 +18,8 @@ import { RegisterDto } from '../dto/register.dto';
 import { VerificationPurpose } from '../../phone-verification/types/verification-purpose.type';
 // Interfaces
 import { DeviceInfo } from '../interfaces/device-info.interface';
+// Events
+import { USER_REGISTERED_PATTERN, UserRegisteredEvent } from '../../../shared/events';
 
 @Injectable()
 export class PhoneAuthenticationService {
@@ -27,6 +30,7 @@ export class PhoneAuthenticationService {
 		private readonly phoneVerificationService: PhoneVerificationService,
 		private readonly tokenService: TokensService,
 		private readonly userAuthService: UserAuthService,
+		@Inject('REDIS_CLIENT') private readonly redisClient: ClientProxy,
 	) { }
 
 	private getWrongPurposeMessage(purpose: VerificationPurpose): string {
@@ -112,6 +116,14 @@ export class PhoneAuthenticationService {
 		const phoneNumber = await this.validatePhoneNumberAvailability(dto.verificationId);
 		const savedUser = await this.createAndSaveUser(phoneNumber);
 		const deviceId = await this.handleDeviceRegistration(savedUser.id, dto, fingerprint);
+
+		// Emit user.registered event via Redis
+		const event: UserRegisteredEvent = {
+			userId: savedUser.id,
+			phoneNumber: savedUser.phoneNumber,
+			timestamp: new Date(),
+		};
+		this.redisClient.emit(USER_REGISTERED_PATTERN, event);
 
 		return this.createAuthSession(savedUser, deviceId, fingerprint, dto.verificationId);
 	}

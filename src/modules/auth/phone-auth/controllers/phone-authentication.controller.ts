@@ -6,8 +6,8 @@ import { DeviceFingerprintService } from '../../devices/services/device-fingerpr
 import { RegisterDto, LoginDto, LogoutDto, RegisterResponseDto, LoginResponseDto } from '../dto';
 import { REGISTER_EXAMPLES, LOGIN_EXAMPLES, LOGOUT_EXAMPLES } from '../swagger/phone-authentication.examples';
 
-@ApiTags('Phone Authentication')
-@Controller()
+@ApiTags('Auth - Authentication by SMS')
+@Controller('auth')
 export class PhoneAuthenticationController {
 
 	constructor(

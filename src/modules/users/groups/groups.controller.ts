@@ -1,41 +1,21 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  Query,
-  Request,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiParam,
-  ApiQuery,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, Request, HttpCode, HttpStatus, } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth, } from '@nestjs/swagger';
 import { GroupsService } from './groups.service';
-import { CreateGroupDto, UpdateGroupDto, AddGroupMemberDto } from '../dto';
-import { Group, GroupMember, GroupRole } from '../entities';
+import { CreateGroupDto } from './create-group.dto';
+import { UpdateGroupDto } from './update-group.dto';
+import { AddGroupMemberDto } from './add-group-member.dto';
+import { Group } from './group.entity';
+import { GroupMember, GroupRole } from './group-member.entity';
 
-@ApiTags('Groups')
+@ApiTags('Discussion Groups')
 @ApiBearerAuth()
-@Controller('groups')
+@Controller('group')
 export class GroupsController {
   constructor(private readonly groupsService: GroupsService) { }
 
   @Post()
   @ApiOperation({ summary: 'Create a new group' })
-  @ApiResponse({
-    status: 201,
-    description: 'Group created successfully',
-    type: Group,
-  })
+  @ApiResponse({ status: 201, description: 'Group created successfully', type: Group, })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Creator not found' })
   async createGroup(
@@ -47,18 +27,8 @@ export class GroupsController {
 
   @Get('my-groups')
   @ApiOperation({ summary: 'Get current user groups' })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: Number,
-    description: 'Page number',
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: 'Items per page',
-  })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number', })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page', })
   @ApiResponse({
     status: 200,
     description: 'User groups retrieved successfully',
@@ -90,24 +60,9 @@ export class GroupsController {
 
   @Get('search')
   @ApiOperation({ summary: 'Search groups by name' })
-  @ApiQuery({
-    name: 'q',
-    required: true,
-    type: String,
-    description: 'Search query',
-  })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: Number,
-    description: 'Page number',
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: 'Items per page',
-  })
+  @ApiQuery({ name: 'q', required: true, type: String, description: 'Search query', })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number', })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page', })
   @ApiResponse({
     status: 200,
     description: 'Groups search results',

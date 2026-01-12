@@ -11,6 +11,7 @@ import { HealthModule } from '../heatlh/health.module';
 import { AuthModule } from '../auth/auth.module';
 import { LifecycleService } from './services/lifecycle.service';
 import { MessagingModule } from '../messaging/messaging.module';
+import { UsersModule } from '../users/users.module';
 
 // Environment variables
 const configModuleOptions: ConfigModuleOptions = {
@@ -47,6 +48,7 @@ const typeOrmModuleAsyncOptions: TypeOrmModuleAsyncOptions = {
     HealthModule,
     AuthModule,
     MessagingModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [LifecycleService],
