@@ -1,0 +1,109 @@
+# ADR 1: Séparation des responsabilités entre auth-service et user-service
+
+## Statut
+Accepté
+
+## Date
+2025-04-11
+
+## Contexte
+Dans notre architecture microservices pour l'application Whispr, nous devons définir précisément la séparation des responsabilités entre le service d'authentification (auth-service) et le service utilisateur (user-service). Cette décision est particulièrement importante car elle impacte:
+
+1. La gestion des données utilisateur
+2. L'authentification multi-appareils
+3. L'autonomie et la résilience des services
+4. Les performances des opérations d'authentification fréquentes
+5. La complexité de mise en œuvre du chiffrement E2E
+
+Notre architecture actuelle utilise gRPC pour la communication inter-services et maintient des bases de données PostgreSQL distinctes pour chaque service. Nous utilisons également Redis pour les données temporaires d'authentification.
+
+## Décision
+Nous avons décidé de mettre en place une **dénormalisation contrôlée** des données utilisateur entre auth-service et user-service, avec la répartition suivante:
+
+### Dans auth-service (PostgreSQL)
+- Table users_auth contenant:
+  - id (même UUID que dans user-service)
+  - phoneNumber (identifiant unique pour l'authentification)
+  - twoFactorSecret (données liées à l'authentification)
+  - twoFactorEnabled (flag)
+  - lastAuthenticatedAt (horodatage)
+  - informations temporelles (createdAt, updatedAt)
+
+- Tables liées aux appareils et clés cryptographiques:
+  - devices
+  - prekeys, signed_prekeys, identity_keys
+  - backup_codes
+  - login_history
+
+### Dans user-service (PostgreSQL)
+- Table users contenant:
+  - id (même UUID que dans users_auth)
+  - phoneNumber
+  - firstName, lastName
+  - username, biography, profilePicture
+  - autres attributs du profil complet
+  - paramètres et préférences utilisateur
+
+### Dans Redis (auth-service)
+- Codes de vérification temporaires
+- Sessions et tokens
+- Données de rate limiting
+
+## Conséquences
+
+### Avantages
+1. **Autonomie des services**: Le service d'authentification peut fonctionner indépendamment sans dépendre constamment du service utilisateur pour les opérations critiques d'authentification.
+2. **Performance**: Pas besoin d'appels gRPC synchrones pour chaque vérification d'authentification, ce qui améliore les performances et la résilience.
+3. **Gestion du découplage**: La table users_auth simplifiée dans auth-service permet de découpler les cycles de vie des deux services.
+4. **Scalabilité indépendante**: Chaque service peut être mis à l'échelle selon ses propres besoins de charge.
+5. **Sécurité renforcée**: La séparation des données sensibles d'authentification (2FA, historique de connexion) des données de profil utilisateur améliore l'isolation de sécurité.
+
+### Inconvénients
+1. **Duplication partielle de données**: Le numéro de téléphone et l'identifiant utilisateur sont dupliqués dans les deux services.
+2. **Synchronisation nécessaire**: Des mécanismes de synchronisation doivent être mis en place pour maintenir la cohérence des données partagées (comme lors d'un changement de numéro de téléphone).
+3. **Complexité accrue**: La gestion de deux sources de vérité partielles augmente la complexité du système.
+4. **Risque d'incohérence**: Sans mécanismes robustes, les données pourraient devenir incohérentes entre les services.
+
+## Solution pour la synchronisation
+Pour maintenir la cohérence entre les services:
+
+1. **Création d'utilisateur**: 
+   - auth-service crée d'abord l'entrée dans users_auth
+   - Puis un événement est publié pour que user-service crée l'entrée correspondante dans users
+
+2. **Mise à jour du numéro de téléphone**:
+   - Doit être mise à jour dans les deux services via un pattern de transaction distribuée ou Saga
+   - Le processus démarre dans auth-service avec la vérification du nouveau numéro
+   - Une fois validé, les deux services sont mis à jour de manière coordonnée
+
+3. **Suppression d'utilisateur**:
+   - Initiée par user-service, puis propagée à auth-service
+   - Ou vice-versa, avec des callbacks de confirmation
+
+## Alternatives considérées
+
+### Alternative 1: Dépendance totale à user-service
+Stocker toutes les données utilisateur uniquement dans user-service et faire des appels gRPC pour chaque opération d'authentification.
+- **Avantage**: Pas de duplication de données
+- **Inconvénient majeur**: Couplage fort rendant auth-service inopérant si user-service est indisponible
+
+### Alternative 2: Duplication complète
+Dupliquer toutes les données utilisateur nécessaires dans les deux services.
+- **Avantage**: Indépendance totale
+- **Inconvénient majeur**: Complexité de synchronisation trop élevée et risque accru d'incohérences
+
+### Alternative 3: Base de données partagée
+Utiliser une seule base de données pour les deux services.
+- **Avantage**: Pas de problèmes de synchronisation
+- **Inconvénient majeur**: Couplage au niveau de la persistance, violation du principe d'isolation des microservices
+
+## Métriques de succès
+- Temps de réponse des opérations d'authentification < 200ms
+- Disponibilité du service auth > 99,9%, même en cas d'indisponibilité temporaire de user-service
+- Taux d'incohérences de données entre services < 0,01%
+
+## Références
+- [Article sur les microservices et la gestion des données partagées](https://microservices.io/patterns/data/database-per-service.html)
+- [Documentation Whispr: Modèle de données auth-service](lien-vers-doc-auth-service)
+- [Documentation Whispr: Modèle de données user-service](lien-vers-doc-user-service)
+- [Documentation gRPC](https://grpc.io/docs/)

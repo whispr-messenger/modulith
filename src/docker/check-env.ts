@@ -33,6 +33,9 @@ function checkOptional(varName: string, defaultValue = ''): boolean {
 }
 
 export default function runEnvChecks(): void {
+	missingVars = 0;
+	optionalVars = 0;
+
 	console.log('==================================================');
 	console.log('  Whispr Messenger - Environment Check');
 	console.log('==================================================\n');
@@ -60,6 +63,8 @@ export default function runEnvChecks(): void {
 	// Ports
 	checkRequired('HTTP_PORT');
 	checkRequired('GRPC_PORT');
+	checkRequired('USER_SERVICE_GRPC_URL');
+	checkRequired('MEDIA_SERVICE_GRPC_URL');
 
 	// Twilio
 	checkRequired('TWILIO_ACCOUNT_SID');

@@ -1,0 +1,1 @@
+export type VerificationPurpose = 'registration' | 'login';

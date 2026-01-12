@@ -23,6 +23,10 @@ import { MessagesController } from './messages/messages.controller';
 // Gateways (WebSocket)
 import { ConversationGateway } from './gateways/conversation.gateway';
 
+// Projection Modules
+import { UserProjectionModule } from './projections/users/user-projection.module';
+import { GroupProjectionModule } from './projections/groups/group-projection.module';
+
 @Module({
     imports: [
         TypeOrmModule.forFeature([
@@ -32,6 +36,9 @@ import { ConversationGateway } from './gateways/conversation.gateway';
             DeliveryStatus,
             MessageReaction,
         ]),
+        // Import projection modules for event handling
+        UserProjectionModule,
+        GroupProjectionModule,
     ],
     controllers: [
         ConversationsController,

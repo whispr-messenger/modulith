@@ -1,17 +1,6 @@
-import {
-    Entity,
-    PrimaryGeneratedColumn,
-    Column,
-    CreateDateColumn,
-    UpdateDateColumn,
-    ManyToOne,
-    JoinColumn,
-    Index,
-    Unique,
-} from 'typeorm';
-import { Conversation } from './conversation.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index, Unique, } from 'typeorm';
 
-@Entity('conversation_members')
+@Entity('conversation_members', { schema: 'messaging' })
 @Unique(['conversationId', 'userId'])
 @Index(['userId', 'isActive'])
 @Index(['conversationId', 'isActive'])
@@ -28,11 +17,37 @@ export class ConversationMember {
 
     @Column({ type: 'simple-json', default: {} })
     settings: {
+        // Paramètres personnels existants
         role?: 'admin' | 'member';
         notifications?: boolean;
         muted?: boolean;
         nickname?: string;
+
+        // Nouveaux paramètres personnels
+        showReadReceipts?: boolean;        // Envoi des accusés de lecture
+        showTypingIndicator?: boolean;     // Affichage "en train d'écrire"
+        soundEnabled?: boolean;            // Son des notifications
+        muteUntil?: Date | null;          // Silencieux jusqu'à (remplace muted simple)
+        customNickname?: string | null;    // Surnom personnalisé (direct)
+
+        // Paramètres de conversation (groupes uniquement)
+        retentionDays?: number | null;          // Durée conservation messages
+        allowReadReceipts?: boolean;            // Autoriser accusés de lecture
+        allowTypingIndicators?: boolean;        // Autoriser indicateurs de frappe
+        messageEditTimeLimit?: number;          // Limite temps modification (minutes)
     };
+
+    @Column({ type: 'boolean', default: false, name: 'is_pinned' })
+    isPinned: boolean;
+
+    @Column({ type: 'boolean', default: false, name: 'is_archived' })
+    isArchived: boolean;
+
+    @Column({ type: 'timestamp', nullable: true, name: 'archived_at' })
+    archivedAt: Date | null;
+
+    @Column({ type: 'timestamp', name: 'joined_at' })
+    joinedAt: Date;
 
     @Column({ type: 'timestamp', nullable: true, name: 'last_read_at' })
     lastReadAt: Date | null;
@@ -47,9 +62,9 @@ export class ConversationMember {
     updatedAt: Date;
 
     // Relations
-    @ManyToOne(() => Conversation, (conversation) => conversation.members, { onDelete: 'CASCADE' })
+    @ManyToOne('Conversation', 'members', { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'conversation_id' })
-    conversation: Conversation;
+    conversation: any;
 
     // Helper methods
     isAdmin(): boolean {
@@ -69,6 +84,15 @@ export class ConversationMember {
             role: 'member',
             notifications: true,
             muted: false,
+            showReadReceipts: true,
+            showTypingIndicator: true,
+            soundEnabled: true,
+            muteUntil: null,
+            customNickname: null,
+            retentionDays: null,  // illimité
+            allowReadReceipts: true,
+            allowTypingIndicators: true,
+            messageEditTimeLimit: 15,
         };
     }
 }

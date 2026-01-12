@@ -4,8 +4,8 @@ import { UserAuthService } from './services/user-auth.service';
 import { UserAuth } from './entities/user-auth.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserAuth])],
-  providers: [UserAuthService],
-  exports: [UserAuthService],
+    imports: [TypeOrmModule.forFeature([UserAuth])],
+    providers: [UserAuthService],
+    exports: [UserAuthService],
 })
-export class CommonModule {}
+export class CommonModule { }

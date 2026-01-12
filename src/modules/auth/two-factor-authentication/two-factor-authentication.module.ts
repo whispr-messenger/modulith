@@ -4,14 +4,15 @@ import { TwoFactorAuthenticationController } from './controllers/two-factor-auth
 import { TwoFactorAuthenticationService } from './services/two-factor-authentication.service';
 import { BackupCodesService } from './backup-codes/backup-codes.service';
 import { UserAuth } from '../common/entities/user-auth.entity';
-import { BackupCode } from '../base/entities/backup-code.entity';
+import { BackupCode } from './entities/backup-code.entity';
 import { TokensModule } from '../tokens/tokens.module';
-import { JwtAuthGuard } from '../base/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../tokens/guards/jwt-auth.guard';
+import { CommonModule } from '../common/common.module';
 
 @Module({
 	providers: [TwoFactorAuthenticationService, BackupCodesService, JwtAuthGuard],
 	controllers: [TwoFactorAuthenticationController],
-	imports: [TypeOrmModule.forFeature([UserAuth, BackupCode]), TokensModule],
+	imports: [TypeOrmModule.forFeature([UserAuth, BackupCode]), TokensModule, CommonModule],
 	exports: [BackupCodesService],
 })
 export class TwoFactorAuthenticationModule { }

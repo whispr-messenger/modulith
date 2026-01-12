@@ -9,9 +9,6 @@ import {
     JoinColumn,
     Index,
 } from 'typeorm';
-import { Conversation } from './conversation.entity';
-import { DeliveryStatus } from './delivery-status.entity';
-import { MessageReaction } from './message-reaction.entity';
 
 export enum MessageType {
     TEXT = 'text',
@@ -20,7 +17,7 @@ export enum MessageType {
     NOTIFICATION = 'notification',
 }
 
-@Entity('messages')
+@Entity('messages', { schema: 'messaging' })
 @Index(['conversationId', 'sentAt'])
 @Index(['senderId'])
 @Index(['sentAt'])
@@ -75,19 +72,19 @@ export class Message {
     updatedAt: Date;
 
     // Relations
-    @ManyToOne(() => Conversation, (conversation) => conversation.messages, { onDelete: 'CASCADE' })
+    @ManyToOne('Conversation', 'messages', { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'conversation_id' })
-    conversation: Conversation;
+    conversation: any;
 
-    @ManyToOne(() => Message, { nullable: true })
+    @ManyToOne('Message', { nullable: true })
     @JoinColumn({ name: 'reply_to_id' })
-    replyTo: Message | null;
+    replyTo: any;
 
-    @OneToMany(() => DeliveryStatus, (status) => status.message, { cascade: true })
-    deliveryStatuses: DeliveryStatus[];
+    @OneToMany('DeliveryStatus', 'message', { cascade: true })
+    deliveryStatuses: any[];
 
-    @OneToMany(() => MessageReaction, (reaction) => reaction.message, { cascade: true })
-    reactions: MessageReaction[];
+    @OneToMany('MessageReaction', 'message', { cascade: true })
+    reactions: any[];
 
     // Helper methods
     isEditable(): boolean {

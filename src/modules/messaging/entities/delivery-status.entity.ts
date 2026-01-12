@@ -9,9 +9,8 @@ import {
     Index,
     Unique,
 } from 'typeorm';
-import { Message } from './message.entity';
 
-@Entity('delivery_statuses')
+@Entity('delivery_statuses', { schema: 'messaging' })
 @Unique(['messageId', 'userId'])
 @Index(['userId', 'deliveredAt'])
 @Index(['messageId'])
@@ -39,9 +38,9 @@ export class DeliveryStatus {
     updatedAt: Date;
 
     // Relations
-    @ManyToOne(() => Message, (message) => message.deliveryStatuses, { onDelete: 'CASCADE' })
+    @ManyToOne('Message', 'deliveryStatuses', { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'message_id' })
-    message: Message;
+    message: any;
 
     // Helper methods
     markAsDelivered(timestamp?: Date): void {
